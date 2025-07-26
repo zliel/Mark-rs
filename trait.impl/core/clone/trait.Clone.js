@@ -1,0 +1,9 @@
+(function() {
+    var implementors = Object.fromEntries([["markrs",[["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.88.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"enum\" href=\"markrs/types/enum.MdInlineElement.html\" title=\"enum markrs::types::MdInlineElement\">MdInlineElement</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.88.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"enum\" href=\"markrs/types/enum.TableAlignment.html\" title=\"enum markrs::types::TableAlignment\">TableAlignment</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.88.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"enum\" href=\"markrs/types/enum.Token.html\" title=\"enum markrs::types::Token\">Token</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.88.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"struct\" href=\"markrs/types/struct.Delimiter.html\" title=\"struct markrs::types::Delimiter\">Delimiter</a>"],["impl <a class=\"trait\" href=\"https://doc.rust-lang.org/1.88.0/core/clone/trait.Clone.html\" title=\"trait core::clone::Clone\">Clone</a> for <a class=\"struct\" href=\"markrs/types/struct.MdTableCell.html\" title=\"struct markrs::types::MdTableCell\">MdTableCell</a>"]]]]);
+    if (window.register_implementors) {
+        window.register_implementors(implementors);
+    } else {
+        window.pending_implementors = implementors;
+    }
+})()
+//{"start":57,"fragment_lengths":[1356]}

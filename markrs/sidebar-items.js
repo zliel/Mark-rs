@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["generate_static_site","main","run"],"mod":["config","html_generator","io","lexer","parser","types","utils"],"static":["CONFIG"],"struct":["Cli"]};
