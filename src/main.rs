@@ -66,7 +66,6 @@ fn run() -> Result<(), Box<dyn Error>> {
     let config_path = &cli.config;
     let run_recursively = &cli.recursive;
     let num_threads = cli.num_threads;
-    let output_dir = &cli.output_dir.clone();
 
     // Setup
     let env = if cli.verbose {
@@ -97,7 +96,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     thread_pool.join_all();
 
     let index_html = generate_index(&file_names);
-    write_html_to_file(&index_html, output_dir, "index.html")?;
+    write_html_to_file(&index_html, &cli.output_dir, "index.html")?;
 
     let css_file = &CONFIG.get().unwrap().html.css_file;
     if css_file != "default" && !css_file.is_empty() {
