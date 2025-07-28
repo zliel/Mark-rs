@@ -11,7 +11,7 @@ use env_logger::Env;
 use log::{error, info};
 use std::error::Error;
 use std::path::Path;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 
 use crate::config::{Config, init_config};
 use crate::html_generator::{generate_html, generate_index};
@@ -21,7 +21,7 @@ use crate::io::{
 };
 use crate::lexer::tokenize;
 use crate::parser::{group_lines_to_blocks, parse_blocks};
-use crate::types::Token;
+use crate::types::{ThreadPool, Token};
 
 static CONFIG: OnceLock<Config> = OnceLock::new();
 
@@ -43,6 +43,8 @@ struct Cli {
     recursive: bool,
     #[arg(short, long, default_value = "false")]
     verbose: bool,
+    #[arg(short, long, default_value = "4")]
+    num_threads: usize,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -63,6 +65,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let input_dir = &cli.input_dir;
     let config_path = &cli.config;
     let run_recursively = &cli.recursive;
+    let num_threads = cli.num_threads;
 
     // Setup
     let env = if cli.verbose {
@@ -76,28 +79,38 @@ fn run() -> Result<(), Box<dyn Error>> {
     let file_contents = read_input_dir(input_dir, run_recursively)?;
     let mut file_names: Vec<String> = Vec::new();
 
+    let thread_pool = ThreadPool::build(num_threads)?;
+    let cli = Arc::new(cli);
     for (file_path, file_content) in file_contents {
         info!("Generating HTML for file: {}", file_path);
-        generate_static_site(&cli, &file_path, &file_content)?;
-        file_names.push(file_path);
+
+        file_names.push(file_path.clone());
+        let cli_clone = Arc::clone(&cli);
+
+        thread_pool.execute(move || {
+            generate_static_site(cli_clone, &file_path, &file_content)
+                .unwrap_or_else(|e| error!("Failed to generate HTML for {}: {}", &file_path, e));
+        })?;
     }
+
+    thread_pool.join_all();
 
     let index_html = generate_index(&file_names);
     write_html_to_file(&index_html, &cli.output_dir, "index.html")?;
 
-    let css_file = CONFIG.get().unwrap().html.css_file.clone();
+    let css_file = &CONFIG.get().unwrap().html.css_file;
     if css_file != "default" && !css_file.is_empty() {
         info!("Using custom CSS file: {}", css_file);
-        copy_css_to_output_dir(&css_file, &cli.output_dir)?;
+        copy_css_to_output_dir(css_file, &cli.output_dir)?;
     } else {
         info!("Using default CSS file.");
         write_default_css_file(&cli.output_dir)?;
     }
 
-    let favicon_path = CONFIG.get().unwrap().html.favicon_file.clone();
+    let favicon_path = &CONFIG.get().unwrap().html.favicon_file;
     if !favicon_path.is_empty() {
         info!("Copying favicon from: {}", favicon_path);
-        copy_favicon_to_output_dir(&favicon_path, &cli.output_dir)?;
+        copy_favicon_to_output_dir(favicon_path, &cli.output_dir)?;
     } else {
         info!("No favicon specified in config.");
     }
@@ -106,7 +119,7 @@ fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn generate_static_site(
-    cli: &Cli,
+    cli: Arc<Cli>,
     file_path: &str,
     file_contents: &str,
 ) -> Result<(), Box<dyn Error>> {
