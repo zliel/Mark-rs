@@ -2,6 +2,8 @@
 //! block elements, and a cursor for navigating through tokens.
 
 use log::warn;
+use std::sync::{Arc, Mutex, mpsc};
+use std::thread;
 
 use crate::html_generator::indent_html;
 use crate::{CONFIG, io::copy_image_to_output_dir, utils::build_rel_prefix};
@@ -597,3 +599,41 @@ impl ThreadPool {
 
 }
 }
+struct Worker {
+    pub id: usize,
+    pub thread: thread::JoinHandle<()>,
+}
+
+impl Worker {
+    fn build(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Result<Self, Box<dyn Error>> {
+        let builder = thread::Builder::new();
+
+        let thread = builder
+            .spawn(move || {
+                loop {
+                    let job_result = {
+                        let receiver = receiver.lock().unwrap();
+                        receiver.recv()
+                    };
+
+                    match job_result {
+                        Ok(job) => {
+                            job();
+                        }
+                        Err(_) => {
+                            break; // Exit the loop if the channel is closed
+                        }
+                    }
+                }
+            })
+            .map_err(|e| {
+                Box::new(WorkerCreationError {
+                    message: format!("Failed to spawn thread {}: {}", id, e),
+                })
+            })?;
+
+        Ok(Worker { id, thread })
+    }
+}
+
+type Job = Box<dyn FnOnce() + Send + 'static>;
