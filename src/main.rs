@@ -84,9 +84,13 @@ fn run() -> Result<(), Box<dyn Error>> {
     let cli = Arc::new(Mutex::new(cli));
     for (file_path, file_content) in file_contents {
         info!("Generating HTML for file: {}", file_path);
-        generate_static_site(&cli, &file_path, &file_content)?;
         file_names.push(file_path.clone());
         let cli_clone = Arc::clone(&cli);
+
+        thread_pool.execute(move || {
+            generate_static_site(cli_clone, &file_path.clone(), &file_content)
+                .unwrap_or_else(|e| error!("Failed to generate HTML for {}: {}", &file_path, e));
+        });
     }
 
     let index_html = generate_index(&file_names);
