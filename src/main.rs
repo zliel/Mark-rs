@@ -81,14 +81,15 @@ fn run() -> Result<(), Box<dyn Error>> {
     let mut file_names: Vec<String> = Vec::new();
 
     let thread_pool = ThreadPool::build(num_threads)?;
-    let cli = Arc::new(Mutex::new(cli));
+    let cli = Arc::new(cli);
     for (file_path, file_content) in file_contents {
         info!("Generating HTML for file: {}", file_path);
+
         file_names.push(file_path.clone());
         let cli_clone = Arc::clone(&cli);
 
         thread_pool.execute(move || {
-            generate_static_site(cli_clone, &file_path.clone(), &file_content)
+            generate_static_site(cli_clone, &file_path, &file_content)
                 .unwrap_or_else(|e| error!("Failed to generate HTML for {}: {}", &file_path, e));
         });
     }
@@ -101,16 +102,16 @@ fn run() -> Result<(), Box<dyn Error>> {
     let css_file = CONFIG.get().unwrap().html.css_file.clone();
     if css_file != "default" && !css_file.is_empty() {
         info!("Using custom CSS file: {}", css_file);
-        copy_css_to_output_dir(&css_file, &cli.lock().unwrap().output_dir)?;
+        copy_css_to_output_dir(&css_file, &cli.output_dir)?;
     } else {
         info!("Using default CSS file.");
-        write_default_css_file(&cli.lock().unwrap().output_dir)?;
+        write_default_css_file(&cli.output_dir)?;
     }
 
     let favicon_path = CONFIG.get().unwrap().html.favicon_file.clone();
     if !favicon_path.is_empty() {
         info!("Copying favicon from: {}", favicon_path);
-        copy_favicon_to_output_dir(&favicon_path, &cli.lock().unwrap().output_dir)?;
+        copy_favicon_to_output_dir(&favicon_path, &cli.output_dir)?;
     } else {
         info!("No favicon specified in config.");
     }
@@ -119,12 +120,11 @@ fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn generate_static_site(
-    cli: Arc<Mutex<Cli>>,
+    cli: Arc<Cli>,
     file_path: &String,
     file_contents: &str,
 ) -> Result<(), Box<dyn Error>> {
     // Tokenizing
-    let cli = cli.lock().unwrap().clone();
     let mut tokenized_lines: Vec<Vec<Token>> = Vec::new();
     for line in file_contents.split('\n') {
         tokenized_lines.push(tokenize(line));
