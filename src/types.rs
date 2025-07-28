@@ -582,7 +582,19 @@ impl std::fmt::Display for PoolCreationError {
     }
 }
 
+#[derive(Debug)]
+pub struct JobExecutionError {
+    pub message: String,
+}
+
+impl std::fmt::Display for JobExecutionError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "JobExecutionError: {}", self.message)
+    }
+}
+
 impl Error for PoolCreationError {}
+impl Error for JobExecutionError {}
 
 pub struct ThreadPool {
     workers: Vec<Worker>,
@@ -622,15 +634,18 @@ impl ThreadPool {
         }
     }
 
-    pub fn execute<F>(&self, f: F)
+    pub fn execute<F>(&self, f: F) -> Result<(), JobExecutionError>
     where
         F: FnOnce() + Send + 'static,
     {
         let job: Job = Box::new(f);
 
-        self.sender.send(job).unwrap_or_else(|e| {
+        self.sender.send(job).map_err(|e| {
             warn!("Failed to send job to thread pool: {}", e);
-        });
+            JobExecutionError {
+                message: format!("Failed to send job to thread pool: {}", e),
+            }
+        })
     }
 }
 
