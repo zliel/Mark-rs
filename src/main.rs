@@ -23,7 +23,8 @@ use crate::io::{
 };
 use crate::lexer::tokenize;
 use crate::parser::{group_lines_to_blocks, parse_blocks};
-use crate::types::{ThreadPool, Token};
+use crate::thread_pool::ThreadPool;
+use crate::types::Token;
 
 static CONFIG: OnceLock<Config> = OnceLock::new();
 
@@ -81,7 +82,10 @@ fn run() -> Result<(), Box<dyn Error>> {
     let file_contents = read_input_dir(input_dir, run_recursively)?;
     let mut file_names: Vec<String> = Vec::new();
 
-    let thread_pool = ThreadPool::build(num_threads)?;
+    let thread_pool = ThreadPool::build(num_threads).map_err(|e| {
+        error!("Failed to create thread pool: {}", e);
+        e
+    })?;
     let cli = Arc::new(cli);
     for (file_path, file_content) in file_contents {
         info!("Generating HTML for file: {}", file_path);
@@ -89,10 +93,16 @@ fn run() -> Result<(), Box<dyn Error>> {
         file_names.push(file_path.clone());
         let cli_clone = Arc::clone(&cli);
 
-        thread_pool.execute(move || {
-            generate_static_site(cli_clone, &file_path, &file_content)
-                .unwrap_or_else(|e| error!("Failed to generate HTML for {}: {}", &file_path, e));
-        })?;
+        thread_pool
+            .execute(move || {
+                generate_static_site(cli_clone, &file_path, &file_content).unwrap_or_else(|e| {
+                    error!("Failed to generate HTML for {}: {}", &file_path, e)
+                });
+            })
+            .map_err(|e| {
+                error!("Failed to execute job in thread pool: {}", e);
+                e
+            })?;
     }
 
     thread_pool.join_all();
