@@ -25,7 +25,7 @@ use crate::types::{ThreadPool, Token};
 
 static CONFIG: OnceLock<Config> = OnceLock::new();
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(
     author = "Zackary Liel",
     version = "1.3.2",
