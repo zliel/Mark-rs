@@ -2,6 +2,7 @@
 //! block elements, and a cursor for navigating through tokens.
 
 use log::warn;
+use std::error::Error;
 use std::sync::{Arc, Mutex, mpsc};
 use std::thread;
 
