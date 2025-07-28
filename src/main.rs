@@ -65,6 +65,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let input_dir = &cli.input_dir;
     let config_path = &cli.config;
     let run_recursively = &cli.recursive;
+    let num_threads = cli.num_threads;
 
     // Setup
     let env = if cli.verbose {
