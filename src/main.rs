@@ -66,6 +66,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let config_path = &cli.config;
     let run_recursively = &cli.recursive;
     let num_threads = cli.num_threads;
+    let output_dir = &cli.output_dir.clone();
 
     // Setup
     let env = if cli.verbose {
@@ -84,7 +85,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     for (file_path, file_content) in file_contents {
         info!("Generating HTML for file: {}", file_path);
         generate_static_site(&cli, &file_path, &file_content)?;
-        file_names.push(file_path);
+        file_names.push(file_path.clone());
         let cli_clone = Arc::clone(&cli);
     }
 
