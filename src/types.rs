@@ -567,3 +567,33 @@ fn is_punctuation(token: &Token) -> bool {
             | Token::CloseParenthesis
     )
 }
+pub struct ThreadPool {
+    workers: Vec<Worker>,
+    sender: mpsc::Sender<Job>,
+}
+
+impl ThreadPool {
+    pub fn build(size: usize) -> Result<Self, PoolCreationError> {
+        if size == 0 {
+            return Err(PoolCreationError {
+                message: "Thread pool size must be greater than 0".to_string(),
+            });
+        }
+
+        let (sender, receiver) = mpsc::channel();
+        let receiver = Arc::new(Mutex::new(receiver));
+
+        let mut workers = Vec::with_capacity(size);
+        for id in 0..size {
+            workers.push(Worker::build(id, Arc::clone(&receiver)).map_err(|e| {
+                PoolCreationError {
+                    message: format!("Failed to create worker thread {}: {}", id, e),
+                }
+            })?);
+        }
+
+        Ok(ThreadPool { workers, sender })
+    }
+
+}
+}
