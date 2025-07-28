@@ -90,7 +90,7 @@ fn run() -> Result<(), Box<dyn Error>> {
         thread_pool.execute(move || {
             generate_static_site(cli_clone, &file_path, &file_content)
                 .unwrap_or_else(|e| error!("Failed to generate HTML for {}: {}", &file_path, e));
-        });
+        })?;
     }
 
     thread_pool.join_all();
@@ -120,7 +120,7 @@ fn run() -> Result<(), Box<dyn Error>> {
 
 fn generate_static_site(
     cli: Arc<Cli>,
-    file_path: &String,
+    file_path: &str,
     file_contents: &str,
 ) -> Result<(), Box<dyn Error>> {
     // Tokenizing
