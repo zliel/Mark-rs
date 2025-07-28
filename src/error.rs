@@ -14,3 +14,9 @@ impl fmt::Display for MarkrsError {
     }
 }
 
+impl From<io::Error> for MarkrsError {
+    fn from(error: io::Error) -> Self {
+        MarkrsError::IO(error)
+    }
+}
+
