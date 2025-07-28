@@ -582,7 +582,6 @@ impl std::fmt::Display for PoolCreationError {
     }
 }
 
-
 impl Error for PoolCreationError {}
 
 pub struct ThreadPool {
