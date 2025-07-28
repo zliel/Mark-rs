@@ -93,6 +93,8 @@ fn run() -> Result<(), Box<dyn Error>> {
         });
     }
 
+    thread_pool.join_all();
+
     let index_html = generate_index(&file_names);
     write_html_to_file(&index_html, &cli.output_dir, "index.html")?;
 
@@ -117,8 +119,8 @@ fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn generate_static_site(
-    cli: &Cli,
-    file_path: &str,
+    cli: Arc<Mutex<Cli>>,
+    file_path: &String,
     file_contents: &str,
 ) -> Result<(), Box<dyn Error>> {
     // Tokenizing
