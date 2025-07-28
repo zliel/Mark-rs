@@ -124,6 +124,7 @@ fn generate_static_site(
     file_contents: &str,
 ) -> Result<(), Box<dyn Error>> {
     // Tokenizing
+    let cli = cli.lock().unwrap().clone();
     let mut tokenized_lines: Vec<Vec<Token>> = Vec::new();
     for line in file_contents.split('\n') {
         tokenized_lines.push(tokenize(line));
