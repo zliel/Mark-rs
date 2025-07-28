@@ -143,7 +143,7 @@ fn generate_head(file_name: &str, html_rel_path: &str) -> String {
     let title = format_title(file_name);
     head.push_str(&format!("\t<title>{}</title>\n", title));
 
-    let favicon_file = config.html.favicon_file.clone();
+    let favicon_file = &config.html.favicon_file;
     if !favicon_file.is_empty() {
         let mut favicon_path = build_rel_prefix(html_rel_path);
         favicon_path.push("media");
@@ -156,7 +156,7 @@ fn generate_head(file_name: &str, html_rel_path: &str) -> String {
         ));
     }
 
-    let css_file = config.html.css_file.clone();
+    let css_file = &config.html.css_file;
     let mut css_path = build_rel_prefix(html_rel_path);
     css_path.push("styles.css");
     let css_href = css_path.to_string_lossy();
@@ -176,9 +176,9 @@ fn generate_head(file_name: &str, html_rel_path: &str) -> String {
     if config.html.use_prism {
         if !config.html.prism_theme.is_empty() {
             let theme = if config.html.sanitize_html {
-                clean(&config.html.prism_theme)
+                &clean(&config.html.prism_theme)
             } else {
-                config.html.prism_theme.clone()
+                &config.html.prism_theme
             };
 
             head.push_str(&format!("\t\t<link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/prism-themes/1.9.0/prism-{}.min.css\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\" />", theme));
