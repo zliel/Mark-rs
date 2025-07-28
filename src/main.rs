@@ -11,7 +11,7 @@ use env_logger::Env;
 use log::{error, info};
 use std::error::Error;
 use std::path::Path;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, OnceLock};
 
 use crate::config::{Config, init_config};
 use crate::html_generator::{generate_html, generate_index};
