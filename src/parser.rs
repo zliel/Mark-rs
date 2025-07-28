@@ -468,15 +468,11 @@ pub fn parse_table(line: &[Token]) -> MdBlockElement {
 
     let header_row = rows
         .first()
-        .expect("Table should have at least a header row")
-        .to_vec();
+        .expect("Table should have at least a header row");
 
-    let alignment_row = rows
-        .get(1)
-        .expect("Table should have an alignment row")
-        .to_vec();
+    let alignment_row = rows.get(1).expect("Table should have an alignment row");
 
-    let alignments: Vec<TableAlignment> = split_row(&alignment_row)
+    let alignments: Vec<TableAlignment> = split_row(alignment_row)
         .into_iter()
         .map(|cell_content| {
             let content: String = cell_content
@@ -501,7 +497,7 @@ pub fn parse_table(line: &[Token]) -> MdBlockElement {
         })
         .collect();
 
-    let headers: Vec<MdTableCell> = split_row(&header_row)
+    let headers: Vec<MdTableCell> = split_row(header_row)
         .into_iter()
         .enumerate()
         .map(|(i, cell_content)| MdTableCell {
@@ -1092,7 +1088,7 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
                         }
                     }
                 } else {
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 }
             }
             Some(Token::BlockQuoteMarker) => {
@@ -1105,22 +1101,22 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
                             Some(Token::Newline),
                         );
                     } else {
-                        current_block.extend(line.to_owned());
+                        current_block.extend_from_slice(line);
                     }
                 } else {
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 }
             }
             Some(Token::CodeTick) => {
-                current_block.extend(line.to_owned());
+                current_block.extend_from_slice(line);
             }
             Some(Token::CodeFence) => {
                 if !is_inside_code_block {
                     is_inside_code_block = true;
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 } else {
                     is_inside_code_block = false;
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                     blocks.push(current_block.clone());
                     current_block.clear();
                 }
@@ -1145,7 +1141,7 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
                         );
                     }
                 } else {
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 }
             }
             Some(Token::Text(_)) => {
@@ -1164,7 +1160,7 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
             }
             _ => {
                 // Catch-all for everything else
-                current_block.extend(line.to_owned());
+                current_block.extend_from_slice(line);
             }
         }
 
@@ -1195,10 +1191,10 @@ fn group_table_rows(
         if previous_line_start == &Token::TableCellSeparator {
             attach_to_previous_block(blocks, previous_block, line, Some(Token::Newline));
         } else {
-            current_block.extend(line.to_owned());
+            current_block.extend_from_slice(line);
         }
     } else {
-        current_block.extend(line.to_owned());
+        current_block.extend_from_slice(line);
     }
 }
 
@@ -1221,14 +1217,14 @@ fn group_text_lines(
             attach_to_previous_block(blocks, previous_block, line, Some(Token::Whitespace));
         } else if matches!(previous_block.first(), Some(Token::Punctuation(_))) {
             // If the previous block was a heading, then this is a new paragraph
-            current_block.extend(line.to_owned());
+            current_block.extend_from_slice(line);
         } else {
             // If the previous block was empty, then this is a new paragraph
-            current_block.extend(line.to_owned());
+            current_block.extend_from_slice(line);
         }
     } else {
         // If the previous block was empty, then this is a new paragraph
-        current_block.extend(line.to_owned());
+        current_block.extend_from_slice(line);
     }
 }
 
@@ -1269,11 +1265,11 @@ fn group_ordered_list(
                 attach_to_previous_block(blocks, previous_block, line, Some(Token::Newline));
             }
             _ => {
-                current_block.extend(line.to_owned());
+                current_block.extend_from_slice(line);
             }
         }
     } else {
-        current_block.extend(line.to_owned());
+        current_block.extend_from_slice(line);
     }
 }
 
@@ -1288,7 +1284,7 @@ fn attach_to_previous_block(
         previous_block.push(separator);
     }
 
-    previous_block.extend(line.to_owned());
+    previous_block.extend_from_slice(line);
     blocks.pop();
     blocks.push(previous_block.clone());
 }
@@ -1311,7 +1307,7 @@ fn group_tabbed_lines(
     line: &[Token],
 ) {
     if line.len() == 1 {
-        current_block.extend(line.to_owned());
+        current_block.extend_from_slice(line);
         return;
     }
 
@@ -1372,13 +1368,13 @@ fn group_tabbed_lines(
                 _ => {
                     // If the previous block is not a list, then we just add the
                     // line to the current block
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 }
             }
         } else {
             // If the previous block is empty, then we just add the line to the
             // current block
-            current_block.extend(line.to_owned());
+            current_block.extend_from_slice(line);
         }
     }
 }
@@ -1416,7 +1412,7 @@ fn group_lines_with_leading_whitespace(
                             Some(Token::Newline),
                         );
                     } else {
-                        current_block.extend(line.to_owned());
+                        current_block.extend_from_slice(line);
                     }
                 }
                 Token::RawHtmlTag(_) => {
@@ -1429,7 +1425,7 @@ fn group_lines_with_leading_whitespace(
                             Some(Token::Newline),
                         );
                     } else {
-                        current_block.extend(line.to_owned());
+                        current_block.extend_from_slice(line);
                     }
                 }
                 Token::Punctuation(string) if string == "-" => {
@@ -1441,7 +1437,7 @@ fn group_lines_with_leading_whitespace(
                             Some(Token::Newline),
                         );
                     } else {
-                        current_block.extend(line.to_owned());
+                        current_block.extend_from_slice(line);
                     }
                 }
                 Token::Text(_) | Token::Punctuation(_) => {
@@ -1459,7 +1455,7 @@ fn group_lines_with_leading_whitespace(
                 }
             }
         } else {
-            current_block.extend(line.to_owned());
+            current_block.extend_from_slice(line);
         }
     }
 }
@@ -1492,7 +1488,7 @@ fn group_dashed_lines(
             }
             _ => {
                 if line.len() > 1 {
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 } else {
                     // Then this is a Setext heading 2
                     previous_block.insert(0, Token::Punctuation(String::from("#")));
@@ -1504,7 +1500,7 @@ fn group_dashed_lines(
             }
         }
     } else {
-        current_block.extend(line.to_owned());
+        current_block.extend_from_slice(line);
     }
 }
 
