@@ -4,6 +4,7 @@ mod html_generator;
 mod io;
 mod lexer;
 mod parser;
+mod thread_pool;
 mod types;
 mod utils;
 
