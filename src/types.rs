@@ -678,7 +678,7 @@ impl Worker {
             .spawn(move || {
                 loop {
                     let job_result = {
-                        let receiver = receiver.lock().unwrap();
+                        let receiver = receiver.lock().expect("Failed to lock receiver mutex");
                         receiver.recv()
                     };
 
