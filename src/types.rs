@@ -668,7 +668,10 @@ struct Worker {
 }
 
 impl Worker {
-    fn build(id: usize, receiver: Arc<Mutex<mpsc::Receiver<Job>>>) -> Result<Self, Box<dyn Error>> {
+    fn build(
+        id: usize,
+        receiver: Arc<Mutex<mpsc::Receiver<Job>>>,
+    ) -> Result<Self, WorkerCreationError> {
         let builder = thread::Builder::new();
 
         let thread = builder
@@ -689,10 +692,8 @@ impl Worker {
                     }
                 }
             })
-            .map_err(|e| {
-                Box::new(WorkerCreationError {
-                    message: format!("Failed to spawn thread {}: {}", id, e),
-                })
+            .map_err(|e| WorkerCreationError {
+                message: format!("Failed to spawn thread {}: {}", id, e),
             })?;
 
         Ok(Worker { id, thread })
