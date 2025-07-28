@@ -597,8 +597,19 @@ impl ThreadPool {
         Ok(ThreadPool { workers, sender })
     }
 
+#[derive(Debug)]
+pub struct WorkerCreationError {
+    pub message: String,
 }
+
+impl std::fmt::Display for WorkerCreationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "WorkerCreationError: {}", self.message)
+    }
 }
+
+impl Error for WorkerCreationError {}
+
 struct Worker {
     pub id: usize,
     pub thread: thread::JoinHandle<()>,
