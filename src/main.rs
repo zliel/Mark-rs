@@ -99,19 +99,19 @@ fn run() -> Result<(), Box<dyn Error>> {
     let index_html = generate_index(&file_names);
     write_html_to_file(&index_html, output_dir, "index.html")?;
 
-    let css_file = CONFIG.get().unwrap().html.css_file.clone();
+    let css_file = &CONFIG.get().unwrap().html.css_file;
     if css_file != "default" && !css_file.is_empty() {
         info!("Using custom CSS file: {}", css_file);
-        copy_css_to_output_dir(&css_file, &cli.output_dir)?;
+        copy_css_to_output_dir(css_file, &cli.output_dir)?;
     } else {
         info!("Using default CSS file.");
         write_default_css_file(&cli.output_dir)?;
     }
 
-    let favicon_path = CONFIG.get().unwrap().html.favicon_file.clone();
+    let favicon_path = &CONFIG.get().unwrap().html.favicon_file;
     if !favicon_path.is_empty() {
         info!("Copying favicon from: {}", favicon_path);
-        copy_favicon_to_output_dir(&favicon_path, &cli.output_dir)?;
+        copy_favicon_to_output_dir(favicon_path, &cli.output_dir)?;
     } else {
         info!("No favicon specified in config.");
     }
