@@ -11,11 +11,11 @@ mod utils;
 use clap::{Parser, command};
 use env_logger::Env;
 use log::{error, info};
-use std::error::Error;
 use std::path::Path;
 use std::sync::{Arc, OnceLock};
 
 use crate::config::{Config, init_config};
+use crate::error::Error;
 use crate::html_generator::{generate_html, generate_index};
 use crate::io::{
     copy_css_to_output_dir, copy_favicon_to_output_dir, read_input_dir, write_default_css_file,
@@ -50,7 +50,7 @@ struct Cli {
     num_threads: usize,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), Error> {
     match run() {
         Ok(_) => {
             info!("Static site generation completed successfully.");
@@ -63,7 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn run() -> Result<(), Box<dyn Error>> {
+fn run() -> Result<(), Error> {
     let cli = Cli::parse();
     let input_dir = &cli.input_dir;
     let config_path = &cli.config;
@@ -130,11 +130,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn generate_static_site(
-    cli: Arc<Cli>,
-    file_path: &str,
-    file_contents: &str,
-) -> Result<(), Box<dyn Error>> {
+fn generate_static_site(cli: Arc<Cli>, file_path: &str, file_contents: &str) -> Result<(), Error> {
     // Tokenizing
     let mut tokenized_lines: Vec<Vec<Token>> = Vec::new();
     for line in file_contents.split('\n') {
