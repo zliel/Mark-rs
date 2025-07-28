@@ -573,20 +573,17 @@ pub fn parse_inline(markdown_tokens: &[Token]) -> Vec<MdInlineElement> {
 
     let mut buffer: String = String::new();
 
-    let mut current_token: Token;
+    let mut current_token: &Token;
     while !cursor.is_at_eof() {
-        current_token = cursor
-            .current()
-            .expect("Token should be valid markdown")
-            .clone();
+        current_token = cursor.current().expect("Token should be valid markdown");
 
         match current_token {
             Token::EmphasisRun { delimiter, length } => {
                 push_buffer_to_collection(&mut parsed_inline_elements, &mut buffer);
 
                 delimiter_stack.push(Delimiter {
-                    run_length: length,
-                    ch: delimiter,
+                    run_length: *length,
+                    ch: *delimiter,
                     token_position: cursor.position(),
                     parsed_position: parsed_inline_elements.len(),
                     active: true,
@@ -645,8 +642,8 @@ pub fn parse_inline(markdown_tokens: &[Token]) -> Vec<MdInlineElement> {
                 parsed_inline_elements.push(image);
             }
             Token::Escape(esc_char) => buffer.push_str(&format!("\\{esc_char}")),
-            Token::Text(string) | Token::Punctuation(string) => buffer.push_str(&string),
-            Token::OrderedListMarker(string) => buffer.push_str(&string),
+            Token::Text(string) | Token::Punctuation(string) => buffer.push_str(string),
+            Token::OrderedListMarker(string) => buffer.push_str(string),
             Token::Whitespace => buffer.push(' '),
             Token::CloseBracket => buffer.push(']'),
             Token::OpenParenthesis => buffer.push('('),
@@ -654,7 +651,7 @@ pub fn parse_inline(markdown_tokens: &[Token]) -> Vec<MdInlineElement> {
             Token::ThematicBreak => buffer.push_str("---"),
             Token::TableCellSeparator => buffer.push('|'),
             Token::BlockQuoteMarker => buffer.push('>'),
-            Token::RawHtmlTag(tag_content) => buffer.push_str(&tag_content),
+            Token::RawHtmlTag(tag_content) => buffer.push_str(tag_content),
             _ => push_buffer_to_collection(&mut parsed_inline_elements, &mut buffer),
         }
 
