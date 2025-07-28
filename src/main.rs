@@ -80,10 +80,12 @@ fn run() -> Result<(), Box<dyn Error>> {
     let mut file_names: Vec<String> = Vec::new();
 
     let thread_pool = ThreadPool::build(num_threads)?;
+    let cli = Arc::new(Mutex::new(cli));
     for (file_path, file_content) in file_contents {
         info!("Generating HTML for file: {}", file_path);
         generate_static_site(&cli, &file_path, &file_content)?;
         file_names.push(file_path);
+        let cli_clone = Arc::clone(&cli);
     }
 
     let index_html = generate_index(&file_names);
