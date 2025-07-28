@@ -613,6 +613,16 @@ impl ThreadPool {
         Ok(ThreadPool { workers, sender })
     }
 
+    pub fn join_all(self) {
+        drop(self.sender); // Close the channel to signal workers to exit
+
+        for worker in self.workers {
+            if let Err(e) = worker.thread.join() {
+                warn!("Worker thread {} failed to join: {:?}", worker.id, e);
+            }
+        }
+    }
+
     pub fn execute<F>(&self, f: F)
     where
         F: FnOnce() + Send + 'static,
