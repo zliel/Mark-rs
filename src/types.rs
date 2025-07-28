@@ -569,6 +569,21 @@ fn is_punctuation(token: &Token) -> bool {
             | Token::CloseParenthesis
     )
 }
+
+#[derive(Debug)]
+pub struct PoolCreationError {
+    pub message: String,
+}
+
+impl std::fmt::Display for PoolCreationError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "PoolCreationError: {}", self.message)
+    }
+}
+
+
+impl Error for PoolCreationError {}
+
 pub struct ThreadPool {
     workers: Vec<Worker>,
     sender: mpsc::Sender<Job>,
@@ -596,6 +611,7 @@ impl ThreadPool {
 
         Ok(ThreadPool { workers, sender })
     }
+
 
 #[derive(Debug)]
 pub struct WorkerCreationError {
