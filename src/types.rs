@@ -612,6 +612,17 @@ impl ThreadPool {
         Ok(ThreadPool { workers, sender })
     }
 
+    pub fn execute<F>(&self, f: F)
+    where
+        F: FnOnce() + Send + 'static,
+    {
+        let job: Job = Box::new(f);
+
+        self.sender.send(job).unwrap_or_else(|e| {
+            warn!("Failed to send job to thread pool: {}", e);
+        });
+    }
+}
 
 #[derive(Debug)]
 pub struct WorkerCreationError {
