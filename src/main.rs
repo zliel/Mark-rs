@@ -11,7 +11,7 @@ use env_logger::Env;
 use log::{error, info};
 use std::error::Error;
 use std::path::Path;
-use std::sync::OnceLock;
+use std::sync::{Arc, Mutex, OnceLock};
 
 use crate::config::{Config, init_config};
 use crate::html_generator::{generate_html, generate_index};
@@ -21,7 +21,7 @@ use crate::io::{
 };
 use crate::lexer::tokenize;
 use crate::parser::{group_lines_to_blocks, parse_blocks};
-use crate::types::Token;
+use crate::types::{ThreadPool, Token};
 
 static CONFIG: OnceLock<Config> = OnceLock::new();
 
@@ -76,6 +76,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     let file_contents = read_input_dir(input_dir, run_recursively)?;
     let mut file_names: Vec<String> = Vec::new();
 
+    let thread_pool = ThreadPool::build(num_threads)?;
     for (file_path, file_content) in file_contents {
         info!("Generating HTML for file: {}", file_path);
         generate_static_site(&cli, &file_path, &file_content)?;
