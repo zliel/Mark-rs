@@ -80,13 +80,14 @@ fn run() -> Result<(), Error> {
 
     init_config(config_path)?;
     let file_contents = read_input_dir(input_dir, run_recursively)?;
-    let mut file_names: Vec<String> = Vec::new();
+    let mut file_names: Vec<String> = Vec::with_capacity(file_contents.len());
 
     let thread_pool = ThreadPool::build(num_threads).map_err(|e| {
         error!("Failed to create thread pool: {}", e);
         e
     })?;
     let cli = Arc::new(cli);
+
     for (file_path, file_content) in file_contents {
         info!("Generating HTML for file: {}", file_path);
 
