@@ -43,6 +43,8 @@ struct Cli {
     recursive: bool,
     #[arg(short, long, default_value = "false")]
     verbose: bool,
+    #[arg(short, long, default_value = "4")]
+    num_threads: usize,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
