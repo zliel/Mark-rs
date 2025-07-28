@@ -5,7 +5,7 @@
 [![Crates.io Version](https://img.shields.io/crates/v/mark-rs)](https://crates.io/crates/mark-rs)
 [![docs](https://img.shields.io/badge/docs-main-blue)](https://zliel.github.io/Mark-rs/markrs/index.html)
 
-Mark-rs is a 100% Commonmark-compliant Markdown parser and static site generator written in Rust.
+Mark-rs is a multithreaded, 100% Commonmark-compliant Markdown parser and static site generator written in Rust.
 It is designed to be fast, efficient, and easy to use.
 
 ## Table of Contents
@@ -26,6 +26,7 @@ It is designed to be fast, efficient, and easy to use.
 
 - Fast Markdown parsing
 - HTML generation
+- Multithreaded
 - Custom configuration
 - Easy-to-use CLI
 
@@ -98,6 +99,7 @@ You can also use the following CLI arguments to customize the behavior of Mark-r
 
 - `-c, --config <CONFIG>`: Specify a custom configuration file (default: `./config.toml`).
 - `-o, --output-dir <OUTPUT_DIR>`: Specify the output directory for the generated HTML files (default: `/output`).
+- `-n --num_threads <NUM_THREADS>`: Specify the number of threads to use (default: 4).
 - `-r, --recursive`: Recursively parse all Markdown files in the specified directory and its subdirectories. (default: false if not present)
 - `-v, --verbose`: Enable verbose output, which will print additional information while the program is running.
 - `-h, --help`: Display help information.
