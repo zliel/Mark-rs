@@ -10,7 +10,7 @@ use std::{
 };
 
 use dirs::config_dir;
-use log::{error, info, warn};
+use log::{error, info};
 
 use crate::config::Config;
 use crate::html_generator::generate_default_css;
