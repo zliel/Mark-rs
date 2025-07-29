@@ -83,11 +83,9 @@ fn parse_indented_codeblock(line: &[Token]) -> MdBlockElement {
     let mut code_content: Vec<String> = Vec::new();
     let mut line_buffer: String = String::new();
 
-    let lines_split_by_newline = line
-        .split(|token| token == &Token::Newline)
-        .collect::<Vec<_>>();
+    let lines_split_by_newline = line.split(|token| token == &Token::Newline);
 
-    lines_split_by_newline.iter().for_each(|token_line| {
+    lines_split_by_newline.for_each(|token_line| {
         if token_line.is_empty() {
             return;
         }
@@ -187,12 +185,9 @@ fn parse_raw_html(line: &[Token]) -> MdBlockElement {
 /// An `MdBlockElement::BlockQuote` containing the parsed content, or a `MdBlockElement::Paragraph`
 /// if the content is empty.
 fn parse_blockquote(line: &[Token]) -> MdBlockElement {
-    let lines_split_by_newline = line
-        .split(|token| token == &Token::Newline)
-        .collect::<Vec<_>>();
+    let lines_split_by_newline = line.split(|token| token == &Token::Newline);
 
     let inner_blocks: Vec<Vec<Token>> = lines_split_by_newline
-        .iter()
         .map(|tokens| {
             let mut result = Vec::new();
             if tokens.first() == Some(&Token::BlockQuoteMarker)
@@ -289,8 +284,8 @@ where
     while i < lists_split_by_newline.len() {
         let line = lists_split_by_newline[i];
         if is_list_item(line) {
-            let content_tokens = line[2..].to_vec();
-            if let Some(content) = parse_block(&content_tokens) {
+            let content_tokens = &line[2..];
+            if let Some(content) = parse_block(content_tokens) {
                 list_items.push(MdListItem { content })
             }
 
@@ -468,15 +463,11 @@ pub fn parse_table(line: &[Token]) -> MdBlockElement {
 
     let header_row = rows
         .first()
-        .expect("Table should have at least a header row")
-        .to_vec();
+        .expect("Table should have at least a header row");
 
-    let alignment_row = rows
-        .get(1)
-        .expect("Table should have an alignment row")
-        .to_vec();
+    let alignment_row = rows.get(1).expect("Table should have an alignment row");
 
-    let alignments: Vec<TableAlignment> = split_row(&alignment_row)
+    let alignments: Vec<TableAlignment> = split_row(alignment_row)
         .into_iter()
         .map(|cell_content| {
             let content: String = cell_content
@@ -501,7 +492,7 @@ pub fn parse_table(line: &[Token]) -> MdBlockElement {
         })
         .collect();
 
-    let headers: Vec<MdTableCell> = split_row(&header_row)
+    let headers: Vec<MdTableCell> = split_row(header_row)
         .into_iter()
         .enumerate()
         .map(|(i, cell_content)| MdTableCell {
@@ -573,20 +564,17 @@ pub fn parse_inline(markdown_tokens: &[Token]) -> Vec<MdInlineElement> {
 
     let mut buffer: String = String::new();
 
-    let mut current_token: Token;
+    let mut current_token: &Token;
     while !cursor.is_at_eof() {
-        current_token = cursor
-            .current()
-            .expect("Token should be valid markdown")
-            .clone();
+        current_token = cursor.current().expect("Token should be valid markdown");
 
         match current_token {
             Token::EmphasisRun { delimiter, length } => {
                 push_buffer_to_collection(&mut parsed_inline_elements, &mut buffer);
 
                 delimiter_stack.push(Delimiter {
-                    run_length: length,
-                    ch: delimiter,
+                    run_length: *length,
+                    ch: *delimiter,
                     token_position: cursor.position(),
                     parsed_position: parsed_inline_elements.len(),
                     active: true,
@@ -645,8 +633,8 @@ pub fn parse_inline(markdown_tokens: &[Token]) -> Vec<MdInlineElement> {
                 parsed_inline_elements.push(image);
             }
             Token::Escape(esc_char) => buffer.push_str(&format!("\\{esc_char}")),
-            Token::Text(string) | Token::Punctuation(string) => buffer.push_str(&string),
-            Token::OrderedListMarker(string) => buffer.push_str(&string),
+            Token::Text(string) | Token::Punctuation(string) => buffer.push_str(string),
+            Token::OrderedListMarker(string) => buffer.push_str(string),
             Token::Whitespace => buffer.push(' '),
             Token::CloseBracket => buffer.push(']'),
             Token::OpenParenthesis => buffer.push('('),
@@ -654,7 +642,7 @@ pub fn parse_inline(markdown_tokens: &[Token]) -> Vec<MdInlineElement> {
             Token::ThematicBreak => buffer.push_str("---"),
             Token::TableCellSeparator => buffer.push('|'),
             Token::BlockQuoteMarker => buffer.push('>'),
-            Token::RawHtmlTag(tag_content) => buffer.push_str(&tag_content),
+            Token::RawHtmlTag(tag_content) => buffer.push_str(tag_content),
             _ => push_buffer_to_collection(&mut parsed_inline_elements, &mut buffer),
         }
 
@@ -1095,7 +1083,7 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
                         }
                     }
                 } else {
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 }
             }
             Some(Token::BlockQuoteMarker) => {
@@ -1108,22 +1096,22 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
                             Some(Token::Newline),
                         );
                     } else {
-                        current_block.extend(line.to_owned());
+                        current_block.extend_from_slice(line);
                     }
                 } else {
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 }
             }
             Some(Token::CodeTick) => {
-                current_block.extend(line.to_owned());
+                current_block.extend_from_slice(line);
             }
             Some(Token::CodeFence) => {
                 if !is_inside_code_block {
                     is_inside_code_block = true;
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 } else {
                     is_inside_code_block = false;
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                     blocks.push(current_block.clone());
                     current_block.clear();
                 }
@@ -1148,7 +1136,7 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
                         );
                     }
                 } else {
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 }
             }
             Some(Token::Text(_)) => {
@@ -1167,7 +1155,7 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
             }
             _ => {
                 // Catch-all for everything else
-                current_block.extend(line.to_owned());
+                current_block.extend_from_slice(line);
             }
         }
 
@@ -1198,10 +1186,10 @@ fn group_table_rows(
         if previous_line_start == &Token::TableCellSeparator {
             attach_to_previous_block(blocks, previous_block, line, Some(Token::Newline));
         } else {
-            current_block.extend(line.to_owned());
+            current_block.extend_from_slice(line);
         }
     } else {
-        current_block.extend(line.to_owned());
+        current_block.extend_from_slice(line);
     }
 }
 
@@ -1224,14 +1212,14 @@ fn group_text_lines(
             attach_to_previous_block(blocks, previous_block, line, Some(Token::Whitespace));
         } else if matches!(previous_block.first(), Some(Token::Punctuation(_))) {
             // If the previous block was a heading, then this is a new paragraph
-            current_block.extend(line.to_owned());
+            current_block.extend_from_slice(line);
         } else {
             // If the previous block was empty, then this is a new paragraph
-            current_block.extend(line.to_owned());
+            current_block.extend_from_slice(line);
         }
     } else {
         // If the previous block was empty, then this is a new paragraph
-        current_block.extend(line.to_owned());
+        current_block.extend_from_slice(line);
     }
 }
 
@@ -1272,11 +1260,11 @@ fn group_ordered_list(
                 attach_to_previous_block(blocks, previous_block, line, Some(Token::Newline));
             }
             _ => {
-                current_block.extend(line.to_owned());
+                current_block.extend_from_slice(line);
             }
         }
     } else {
-        current_block.extend(line.to_owned());
+        current_block.extend_from_slice(line);
     }
 }
 
@@ -1291,7 +1279,7 @@ fn attach_to_previous_block(
         previous_block.push(separator);
     }
 
-    previous_block.extend(line.to_owned());
+    previous_block.extend_from_slice(line);
     blocks.pop();
     blocks.push(previous_block.clone());
 }
@@ -1314,7 +1302,7 @@ fn group_tabbed_lines(
     line: &[Token],
 ) {
     if line.len() == 1 {
-        current_block.extend(line.to_owned());
+        current_block.extend_from_slice(line);
         return;
     }
 
@@ -1375,13 +1363,13 @@ fn group_tabbed_lines(
                 _ => {
                     // If the previous block is not a list, then we just add the
                     // line to the current block
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 }
             }
         } else {
             // If the previous block is empty, then we just add the line to the
             // current block
-            current_block.extend(line.to_owned());
+            current_block.extend_from_slice(line);
         }
     }
 }
@@ -1419,7 +1407,7 @@ fn group_lines_with_leading_whitespace(
                             Some(Token::Newline),
                         );
                     } else {
-                        current_block.extend(line.to_owned());
+                        current_block.extend_from_slice(line);
                     }
                 }
                 Token::RawHtmlTag(_) => {
@@ -1432,7 +1420,7 @@ fn group_lines_with_leading_whitespace(
                             Some(Token::Newline),
                         );
                     } else {
-                        current_block.extend(line.to_owned());
+                        current_block.extend_from_slice(line);
                     }
                 }
                 Token::Punctuation(string) if string == "-" => {
@@ -1444,7 +1432,7 @@ fn group_lines_with_leading_whitespace(
                             Some(Token::Newline),
                         );
                     } else {
-                        current_block.extend(line.to_owned());
+                        current_block.extend_from_slice(line);
                     }
                 }
                 Token::Text(_) | Token::Punctuation(_) => {
@@ -1462,7 +1450,7 @@ fn group_lines_with_leading_whitespace(
                 }
             }
         } else {
-            current_block.extend(line.to_owned());
+            current_block.extend_from_slice(line);
         }
     }
 }
@@ -1495,7 +1483,7 @@ fn group_dashed_lines(
             }
             _ => {
                 if line.len() > 1 {
-                    current_block.extend(line.to_owned());
+                    current_block.extend_from_slice(line);
                 } else {
                     // Then this is a Setext heading 2
                     previous_block.insert(0, Token::Punctuation(String::from("#")));
@@ -1507,7 +1495,7 @@ fn group_dashed_lines(
             }
         }
     } else {
-        current_block.extend(line.to_owned());
+        current_block.extend_from_slice(line);
     }
 }
 

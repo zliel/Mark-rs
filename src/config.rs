@@ -1,5 +1,6 @@
 //! This module handles the configuration I/O for the application.
 
+use std::fmt;
 use std::str::FromStr;
 
 use log::{error, info, warn};
@@ -85,32 +86,28 @@ impl Config {
     ///
     /// # Returns
     /// Returns a `Result` containing the `Config` instance if successful
-    pub fn from_file(file_path: &str) -> Result<Self, String> {
+    pub fn from_file(file_path: &str) -> Result<Self, Error> {
         // If the user provided a config file, try to load the config from it
         if !file_path.is_empty() {
             info!("Loading config from file: {}", file_path);
-            let contents = std::fs::read_to_string(file_path)
-                .map_err(|e| format!("Failed to read config file: {}", e))?;
+            let contents = std::fs::read_to_string(file_path)?;
 
-            let config: Config = toml_edit::de::from_str(&contents)
-                .map_err(|e| format!("Failed to parse config file: {}", e))?;
+            let config: Config = toml_edit::de::from_str(&contents)?;
 
             validate_config(file_path, &contents, &config)?;
 
             return Ok(config);
         }
 
-        let config_path =
-            get_config_path().map_err(|e| format!("Failed to get config path: {}", e))?;
+        let config_path = get_config_path()?;
 
         // If the user did not provide a config file, check if a config file exists in the config
         // directory
         if does_config_exist()? {
-            let contents = std::fs::read_to_string(&config_path)
-                .map_err(|e| format!("Failed to read config file: {}", e))?;
+            let contents = std::fs::read_to_string(&config_path)?;
 
-            let config: Config = toml_edit::de::from_str(&contents)
-                .map_err(|e| format!("Failed to parse config file: {}", e))?;
+            let config: Config =
+                toml_edit::de::from_str(&contents).map_err(Error::TomlDeserialization)?;
 
             validate_config(&config_path.to_string_lossy(), &contents, &config)?;
 
@@ -121,8 +118,7 @@ impl Config {
                 config_path.to_string_lossy()
             );
 
-            let default_config = write_default_config()
-                .map_err(|e| format!("Failed to write default config: {}", e))?;
+            let default_config = write_default_config()?;
 
             Ok(default_config)
         }
@@ -132,12 +128,10 @@ impl Config {
 /// Validates the configuration by checking if the original config file matches the filled config
 ///
 /// If the original config is missing fields, it updates the file with any missing fields
-fn validate_config(file_path: &str, contents: &str, config: &Config) -> Result<(), String> {
-    let mut doc = toml_edit::DocumentMut::from_str(contents)
-        .map_err(|e| format!("Failed to create TOML document: {}", e))?;
+fn validate_config(file_path: &str, contents: &str, config: &Config) -> Result<(), Error> {
+    let mut doc = toml_edit::DocumentMut::from_str(contents).map_err(Error::Toml)?;
 
-    let filled_doc = toml_edit::ser::to_document(config)
-        .map_err(|e| format!("Failed to serialize config to TOML: {}", e))?;
+    let filled_doc = toml_edit::ser::to_document(config)?;
 
     let mut config_needs_update = false;
     let mut missing_fields = Vec::new();
@@ -200,8 +194,7 @@ fn validate_config(file_path: &str, contents: &str, config: &Config) -> Result<(
         }
         doc["html"].as_table_mut().unwrap().sort_values();
 
-        std::fs::write(file_path, doc.to_string())
-            .map_err(|e| format!("Failed to write config file: {}", e))?;
+        std::fs::write(file_path, doc.to_string())?
     }
 
     Ok(())
@@ -215,7 +208,7 @@ fn validate_config(file_path: &str, contents: &str, config: &Config) -> Result<(
 /// # Returns
 /// Returns a `Result` indicating success or failure. If successful, a global `CONFIG` has been
 /// initialized.
-pub fn init_config(config_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+pub fn init_config(config_path: &str) -> Result<(), Error> {
     CONFIG.get_or_init(|| {
         Config::from_file(config_path).unwrap_or_else(|err| {
             error!("Failed to load config: {}", err);
@@ -223,4 +216,48 @@ pub fn init_config(config_path: &str) -> Result<(), Box<dyn std::error::Error>> 
         })
     });
     Ok(())
+}
+
+#[derive(Debug)]
+pub enum Error {
+    Io(std::io::Error),
+    Toml(toml_edit::TomlError),
+    TomlSerialization(toml_edit::ser::Error),
+    TomlDeserialization(toml_edit::de::Error),
+}
+
+// Display
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::Io(e) => write!(f, "I/O error: {}", e),
+            Error::Toml(e) => write!(f, "TOML error: {}", e),
+            Error::TomlSerialization(e) => write!(f, "TOML serialization error: {}", e),
+            Error::TomlDeserialization(e) => write!(f, "TOML deserialization error: {}", e),
+        }
+    }
+}
+
+impl From<std::io::Error> for Error {
+    fn from(err: std::io::Error) -> Self {
+        Error::Io(err)
+    }
+}
+
+impl From<toml_edit::TomlError> for Error {
+    fn from(err: toml_edit::TomlError) -> Self {
+        Error::Toml(err)
+    }
+}
+
+impl From<toml_edit::ser::Error> for Error {
+    fn from(err: toml_edit::ser::Error) -> Self {
+        Error::TomlSerialization(err)
+    }
+}
+
+impl From<toml_edit::de::Error> for Error {
+    fn from(err: toml_edit::de::Error) -> Self {
+        Error::TomlDeserialization(err)
+    }
 }

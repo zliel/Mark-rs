@@ -1,19 +1,21 @@
 mod config;
+mod error;
 mod html_generator;
 mod io;
 mod lexer;
 mod parser;
+mod thread_pool;
 mod types;
 mod utils;
 
 use clap::{Parser, command};
 use env_logger::Env;
 use log::{error, info};
-use std::error::Error;
 use std::path::Path;
 use std::sync::{Arc, OnceLock};
 
 use crate::config::{Config, init_config};
+use crate::error::Error;
 use crate::html_generator::{generate_html, generate_index};
 use crate::io::{
     copy_css_to_output_dir, copy_favicon_to_output_dir, read_input_dir, write_default_css_file,
@@ -21,7 +23,8 @@ use crate::io::{
 };
 use crate::lexer::tokenize;
 use crate::parser::{group_lines_to_blocks, parse_blocks};
-use crate::types::{ThreadPool, Token};
+use crate::thread_pool::ThreadPool;
+use crate::types::Token;
 
 static CONFIG: OnceLock<Config> = OnceLock::new();
 
@@ -47,7 +50,7 @@ struct Cli {
     num_threads: usize,
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() -> Result<(), Error> {
     match run() {
         Ok(_) => {
             info!("Static site generation completed successfully.");
@@ -60,7 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 }
 
-fn run() -> Result<(), Box<dyn Error>> {
+fn run() -> Result<(), Error> {
     let cli = Cli::parse();
     let input_dir = &cli.input_dir;
     let config_path = &cli.config;
@@ -77,20 +80,30 @@ fn run() -> Result<(), Box<dyn Error>> {
 
     init_config(config_path)?;
     let file_contents = read_input_dir(input_dir, run_recursively)?;
-    let mut file_names: Vec<String> = Vec::new();
+    let mut file_names: Vec<String> = Vec::with_capacity(file_contents.len());
 
-    let thread_pool = ThreadPool::build(num_threads)?;
+    let thread_pool = ThreadPool::build(num_threads).map_err(|e| {
+        error!("Failed to create thread pool: {}", e);
+        e
+    })?;
     let cli = Arc::new(cli);
+
     for (file_path, file_content) in file_contents {
         info!("Generating HTML for file: {}", file_path);
 
         file_names.push(file_path.clone());
         let cli_clone = Arc::clone(&cli);
 
-        thread_pool.execute(move || {
-            generate_static_site(cli_clone, &file_path, &file_content)
-                .unwrap_or_else(|e| error!("Failed to generate HTML for {}: {}", &file_path, e));
-        })?;
+        thread_pool
+            .execute(move || {
+                generate_static_site(cli_clone, &file_path, &file_content).unwrap_or_else(|e| {
+                    error!("Failed to generate HTML for {}: {}", &file_path, e)
+                });
+            })
+            .map_err(|e| {
+                error!("Failed to execute job in thread pool: {}", e);
+                e
+            })?;
     }
 
     thread_pool.join_all();
@@ -118,11 +131,7 @@ fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn generate_static_site(
-    cli: Arc<Cli>,
-    file_path: &str,
-    file_contents: &str,
-) -> Result<(), Box<dyn Error>> {
+fn generate_static_site(cli: Arc<Cli>, file_path: &str, file_contents: &str) -> Result<(), Error> {
     // Tokenizing
     let mut tokenized_lines: Vec<Vec<Token>> = Vec::new();
     for line in file_contents.split('\n') {
