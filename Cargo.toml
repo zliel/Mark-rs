@@ -22,3 +22,7 @@ unicode_categories = "0.1.1"
 [[bin]]
 name = "markrs"
 path = "src/main.rs"
+
+[profile.release]
+lto = true
+codegen-units = 1
