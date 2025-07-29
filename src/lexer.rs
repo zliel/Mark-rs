@@ -217,8 +217,11 @@ pub fn tokenize(markdown_line: &str) -> Vec<Token> {
 /// assert!(is_punctuation("$"));
 /// ```
 fn is_punctuation(input_str: &str) -> bool {
-    let ch = input_str.chars().next().unwrap_or_default();
-    input_str.chars().count() == 1 && (ch.is_punctuation() || ch.is_symbol_currency())
+    if let Some(ch) = input_str.chars().next() {
+        ch.is_punctuation() || ch.is_symbol_currency()
+    } else {
+        false
+    }
 }
 
 #[cfg(test)]
