@@ -1,6 +1,8 @@
 //! This module provides functionality to tokenize a line of markdown text into a vector of `Token`
 //! enums.
 
+use std::mem::take;
+
 use crate::CONFIG;
 use crate::types::Token;
 use crate::utils::push_buffer_to_collection;
@@ -131,8 +133,7 @@ pub fn tokenize(markdown_line: &str) -> Vec<Token> {
                 if i + 1 < str_len && chars[i + 1] == ">" {
                     buffer.push_str(chars[i]);
                     buffer.push_str(chars[i + 1]);
-                    tokens.push(Token::RawHtmlTag(buffer.clone()));
-                    buffer.clear();
+                    tokens.push(Token::RawHtmlTag(take(&mut buffer)));
                     i += 1;
                 } else {
                     buffer.push_str(chars[i]);
