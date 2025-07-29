@@ -83,11 +83,9 @@ fn parse_indented_codeblock(line: &[Token]) -> MdBlockElement {
     let mut code_content: Vec<String> = Vec::new();
     let mut line_buffer: String = String::new();
 
-    let lines_split_by_newline = line
-        .split(|token| token == &Token::Newline)
-        .collect::<Vec<_>>();
+    let lines_split_by_newline = line.split(|token| token == &Token::Newline);
 
-    lines_split_by_newline.iter().for_each(|token_line| {
+    lines_split_by_newline.for_each(|token_line| {
         if token_line.is_empty() {
             return;
         }
@@ -187,12 +185,9 @@ fn parse_raw_html(line: &[Token]) -> MdBlockElement {
 /// An `MdBlockElement::BlockQuote` containing the parsed content, or a `MdBlockElement::Paragraph`
 /// if the content is empty.
 fn parse_blockquote(line: &[Token]) -> MdBlockElement {
-    let lines_split_by_newline = line
-        .split(|token| token == &Token::Newline)
-        .collect::<Vec<_>>();
+    let lines_split_by_newline = line.split(|token| token == &Token::Newline);
 
     let inner_blocks: Vec<Vec<Token>> = lines_split_by_newline
-        .iter()
         .map(|tokens| {
             let mut result = Vec::new();
             if tokens.first() == Some(&Token::BlockQuoteMarker)
@@ -289,8 +284,8 @@ where
     while i < lists_split_by_newline.len() {
         let line = lists_split_by_newline[i];
         if is_list_item(line) {
-            let content_tokens = line[2..].to_vec();
-            if let Some(content) = parse_block(&content_tokens) {
+            let content_tokens = &line[2..];
+            if let Some(content) = parse_block(content_tokens) {
                 list_items.push(MdListItem { content })
             }
 
