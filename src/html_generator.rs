@@ -3,6 +3,7 @@
 use ammonia::clean;
 
 use crate::CONFIG;
+use crate::config::Config;
 use crate::types::{MdBlockElement, ToHtml};
 use crate::utils::build_rel_prefix;
 
@@ -26,8 +27,9 @@ pub fn generate_html(
     html_rel_path: &str,
 ) -> String {
     let mut html_output = String::new();
+    let config = CONFIG.get().unwrap();
 
-    let head = generate_head(file_name, html_rel_path);
+    let head = generate_head(file_name, html_rel_path, config);
 
     let mut body = String::from("\t<body>\n");
     body.push_str(&indent_html(&generate_navbar(html_rel_path), 2));
@@ -39,7 +41,7 @@ pub fn generate_html(
         .collect::<Vec<String>>()
         .join("\n");
 
-    let inner_html = if CONFIG.get().unwrap().html.sanitize_html {
+    let inner_html = if config.html.sanitize_html {
         ammonia::Builder::default()
             .add_tag_attributes("a", &["href", "title", "target"])
             .add_tag_attribute_values("a", "target", &["_blank", "_self"])
@@ -66,7 +68,7 @@ pub fn generate_html(
     body.push_str(&indent_html(&inner_html, 3));
     body.push_str("\n\t\t</div>");
 
-    if CONFIG.get().unwrap().html.use_prism {
+    if config.html.use_prism {
         body.push_str(
             "\n\n\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/components/prism-core.min.js\" integrity=\"sha512-Uw06iFFf9hwoN77+kPl/1DZL66tKsvZg6EWm7n6QxInyptVuycfrO52hATXDRozk7KWeXnrSueiglILct8IkkA==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\"></script>",
         );
@@ -98,7 +100,7 @@ pub fn generate_html(
 pub fn generate_index(file_names: &[String]) -> String {
     let mut html_output = String::new();
 
-    let head = generate_head("index", "index.html");
+    let head = generate_head("index", "index.html", CONFIG.get().unwrap());
 
     let mut body = String::from("\t<body>\n");
     body.push_str(&generate_navbar("index.html"));
@@ -128,8 +130,7 @@ pub fn generate_index(file_names: &[String]) -> String {
 /// * `file_name` - The name of the markdown file, used to set the title of the HTML document.
 /// * `html_rel_path` - The relative path to the HTML file from the output directory, used for
 ///   linking
-fn generate_head(file_name: &str, html_rel_path: &str) -> String {
-    let config = CONFIG.get().unwrap();
+fn generate_head(file_name: &str, html_rel_path: &str, config: &Config) -> String {
     let mut head = String::from(
         r#"<!DOCTYPE html>
     <html lang="en">
