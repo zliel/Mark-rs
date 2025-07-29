@@ -146,7 +146,7 @@ pub fn tokenize(markdown_line: &str) -> Vec<Token> {
                     if i == 0 || tokens.last() == Some(&Token::Tab) {
                         push_buffer_to_collection(&mut tokens, &mut buffer);
                         tokens.push(Token::OrderedListMarker(chars[i].to_owned() + chars[i + 1]));
-                        // tokens.push(Token::Whitespace);
+
                         i += 2;
                         continue;
                     } else {
