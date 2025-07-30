@@ -192,6 +192,8 @@ fn run() -> Result<(), Error> {
         info!("No favicon specified in config.");
     }
 
+    thread_pool.join_all();
+
     Ok(())
 }
 
