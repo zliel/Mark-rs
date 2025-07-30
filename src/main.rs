@@ -93,13 +93,15 @@ fn run() -> Result<(), Error> {
         info!("Generating HTML for file: {}", file_path);
 
         file_names.push(file_path.clone());
-        let cli_clone = Arc::clone(&cli);
 
         thread_pool
-            .execute(move || {
-                generate_static_site(cli_clone, &file_path, &file_content).unwrap_or_else(|e| {
-                    error!("Failed to generate HTML for {}: {}", &file_path, e)
-                });
+            .execute({
+                let cli = Arc::clone(&cli);
+                move || {
+                    generate_static_site(cli, &file_path, &file_content).unwrap_or_else(|e| {
+                        error!("Failed to generate HTML for {}: {}", &file_path, e)
+                    });
+                }
             })
             .map_err(|e| {
                 error!("Failed to execute job in thread pool: {}", e);
