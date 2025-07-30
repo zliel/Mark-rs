@@ -4,6 +4,8 @@
 //! It provides functions to parse block-level elements like headings, lists, and code blocks,
 //! as well as inline elements like links, images, and emphasis.
 
+use std::mem::take;
+
 use log::warn;
 
 use crate::CONFIG;
@@ -99,7 +101,6 @@ fn parse_indented_codeblock(line: &[Token]) -> MdBlockElement {
                 Token::Whitespace => line_buffer.push(' '),
                 Token::Newline => {
                     push_buffer_to_collection(&mut code_content, &mut line_buffer);
-                    line_buffer.clear();
                 }
                 Token::Escape(esc_char) => {
                     line_buffer.push_str(&format!("\\{esc_char}"));
@@ -371,7 +372,6 @@ fn parse_codeblock(line: &[Token]) -> MdBlockElement {
                 Token::Whitespace => line_buffer.push(' '),
                 Token::Newline => {
                     push_buffer_to_collection(&mut code_content, &mut line_buffer);
-                    line_buffer.clear();
                 }
                 Token::Tab => {
                     line_buffer.push_str(&" ".repeat(CONFIG.get().unwrap().lexer.tab_size));
@@ -1071,15 +1071,15 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
                 if let Some(previous_line_start) = previous_block.first() {
                     match previous_line_start {
                         Token::Punctuation(string) if string == "#" => {
-                            blocks.push(line.to_owned());
+                            blocks.push(take(line));
                         }
-                        Token::Newline => blocks.push(line.to_owned()),
+                        Token::Newline => blocks.push(take(line)),
                         _ => {
                             previous_block.insert(0, Token::Punctuation(String::from("#")));
                             previous_block.insert(1, Token::Punctuation(String::from("#")));
                             previous_block.insert(2, Token::Whitespace);
                             blocks.pop();
-                            blocks.push(previous_block.clone());
+                            blocks.push(take(&mut previous_block));
                         }
                     }
                 } else {
@@ -1112,8 +1112,7 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
                 } else {
                     is_inside_code_block = false;
                     current_block.extend_from_slice(line);
-                    blocks.push(current_block.clone());
-                    current_block.clear();
+                    blocks.push(take(&mut current_block));
                 }
             }
             Some(Token::Text(string)) if string == "=" => {
@@ -1160,7 +1159,7 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
         }
 
         if !current_block.is_empty() {
-            blocks.push(current_block.clone());
+            blocks.push(take(&mut current_block));
         }
 
         current_block.clear();
@@ -1235,7 +1234,7 @@ fn group_setext_heading_one(blocks: &mut Vec<Vec<Token>>, previous_block: &mut V
 
     // Swap previous block in
     blocks.pop();
-    blocks.push(previous_block.clone());
+    blocks.push(take(previous_block));
 }
 
 /// Groups ordered list lines into a block by appending the line to the previous block if it is
@@ -1281,7 +1280,7 @@ fn attach_to_previous_block(
 
     previous_block.extend_from_slice(line);
     blocks.pop();
-    blocks.push(previous_block.clone());
+    blocks.push(take(previous_block));
 }
 
 /// Groups tabbed lines into blocks based on the previous block's content.
@@ -1490,7 +1489,7 @@ fn group_dashed_lines(
                     previous_block.insert(1, Token::Punctuation(String::from("#")));
                     previous_block.insert(2, Token::Whitespace);
                     blocks.pop();
-                    blocks.push(previous_block.clone());
+                    blocks.push(take(previous_block));
                 }
             }
         }

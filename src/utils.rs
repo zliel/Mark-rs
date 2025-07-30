@@ -1,4 +1,7 @@
-use std::path::{Path, PathBuf};
+use std::{
+    mem::take,
+    path::{Path, PathBuf},
+};
 
 /// Utility function for pushing a String buffer to a generic collection.
 ///
@@ -17,8 +20,7 @@ where
     T: From<String>,
 {
     if !buffer.is_empty() {
-        collection.push(T::from(buffer.to_string()));
-        buffer.clear();
+        collection.push(T::from(take(buffer)));
     }
 }
 

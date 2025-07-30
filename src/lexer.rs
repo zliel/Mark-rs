@@ -1,6 +1,8 @@
 //! This module provides functionality to tokenize a line of markdown text into a vector of `Token`
 //! enums.
 
+use std::mem::take;
+
 use crate::CONFIG;
 use crate::types::Token;
 use crate::utils::push_buffer_to_collection;
@@ -131,8 +133,7 @@ pub fn tokenize(markdown_line: &str) -> Vec<Token> {
                 if i + 1 < str_len && chars[i + 1] == ">" {
                     buffer.push_str(chars[i]);
                     buffer.push_str(chars[i + 1]);
-                    tokens.push(Token::RawHtmlTag(buffer.clone()));
-                    buffer.clear();
+                    tokens.push(Token::RawHtmlTag(take(&mut buffer)));
                     i += 1;
                 } else {
                     buffer.push_str(chars[i]);
@@ -145,7 +146,7 @@ pub fn tokenize(markdown_line: &str) -> Vec<Token> {
                     if i == 0 || tokens.last() == Some(&Token::Tab) {
                         push_buffer_to_collection(&mut tokens, &mut buffer);
                         tokens.push(Token::OrderedListMarker(chars[i].to_owned() + chars[i + 1]));
-                        // tokens.push(Token::Whitespace);
+
                         i += 2;
                         continue;
                     } else {
@@ -216,8 +217,11 @@ pub fn tokenize(markdown_line: &str) -> Vec<Token> {
 /// assert!(is_punctuation("$"));
 /// ```
 fn is_punctuation(input_str: &str) -> bool {
-    let ch = input_str.chars().next().unwrap_or_default();
-    input_str.chars().count() == 1 && (ch.is_punctuation() || ch.is_symbol_currency())
+    if let Some(ch) = input_str.chars().next() {
+        ch.is_punctuation() || ch.is_symbol_currency()
+    } else {
+        false
+    }
 }
 
 #[cfg(test)]

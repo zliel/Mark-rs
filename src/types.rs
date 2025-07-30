@@ -353,10 +353,8 @@ impl ToHtml for MdInlineElement {
                 title,
                 url,
             } => {
-                let mut media_url = url.clone();
-
                 // If the image uses a relative path, copy it to the output directory
-                if !url.starts_with("http") {
+                let media_url = if !url.starts_with("http") {
                     if let Err(e) = copy_image_to_output_dir(url, output_dir, input_dir) {
                         warn!("Unable to copy image {url}: {e}");
                     }
@@ -366,8 +364,10 @@ impl ToHtml for MdInlineElement {
 
                     let rel_prefix = build_rel_prefix(html_rel_path);
 
-                    media_url = format!("./{}/media/{}", rel_prefix.to_string_lossy(), url);
-                }
+                    &format!("./{}/media/{}", rel_prefix.to_string_lossy(), url)
+                } else {
+                    url
+                };
 
                 match title {
                     Some(text) => {
