@@ -79,6 +79,7 @@ fn run() -> Result<(), Error> {
     env_logger::Builder::from_env(env).init();
 
     init_config(config_path)?;
+    let config = CONFIG.get().unwrap();
     let file_contents = read_input_dir(input_dir, run_recursively)?;
     let mut file_names: Vec<String> = Vec::with_capacity(file_contents.len());
 
