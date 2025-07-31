@@ -85,15 +85,10 @@ impl ToHtml for MdBlockElement {
                 let id = content
                     .iter()
                     .map(MdInlineElement::to_plain_text)
-                    .collect::<String>()
-                    .to_lowercase()
-                    .replace([' ', '_'], "-")
-                    .replace(
-                        [
-                            '<', '>', '/', '\\', '"', '\'', '&', '`', ',', '?', '!', '.', ':', ';',
-                        ],
-                        "",
-                    );
+                    .collect::<String>();
+
+                let id = clean_id(id);
+                println!("Header ID: {id}");
 
                 format!("\n<h{level} id=\"{id}\">{inner_html}</h{level}>\n")
             }
@@ -188,6 +183,30 @@ impl ToHtml for MdBlockElement {
             }
         }
     }
+}
+
+fn clean_id(old_id: String) -> String {
+    let mut new_id = String::new();
+
+    let mut in_tag = false;
+    for char in old_id.chars() {
+        if char == '<' {
+            in_tag = true;
+        } else if char == '>' {
+            in_tag = false;
+            continue;
+        }
+
+        if !in_tag && (char.is_alphanumeric() || char == '_' || char == ' ') {
+            new_id.push(char);
+        }
+    }
+
+    new_id
+        .replace([' ', '_'], "-")
+        .to_lowercase()
+        .trim_matches('-')
+        .to_string()
 }
 
 /// Represents a list item in markdown, which can contain block elements.
