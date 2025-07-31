@@ -42,7 +42,8 @@ pub fn generate_html(
         .join("\n");
 
     let inner_html = if config.html.sanitize_html {
-        ammonia::Builder::default()
+        let mut builder = ammonia::Builder::default();
+        builder
             .add_tag_attributes("a", &["href", "title", "target"])
             .add_tag_attribute_values("a", "target", &["_blank", "_self"])
             .add_tag_attributes("pre", &["class"])
@@ -58,9 +59,9 @@ pub fn generate_html(
                     "frameborder",
                     "allowfullscreen",
                 ],
-            )
-            .clean(&inner_html)
-            .to_string()
+            );
+
+        builder.clean(&inner_html).to_string()
     } else {
         inner_html
     };
