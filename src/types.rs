@@ -185,6 +185,7 @@ impl ToHtml for MdBlockElement {
     }
 }
 
+/// Cleans the ID string by removing HTML tags and special characters, and replacing spaces and underscores with hyphens.
 fn clean_id(old_id: String) -> String {
     let mut new_id = String::new();
 
