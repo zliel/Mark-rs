@@ -211,7 +211,7 @@ fn validate_config(file_path: &str, contents: &str, config: &Config) -> Result<(
 pub fn init_config(config_path: &str) -> Result<(), Error> {
     CONFIG.get_or_init(|| {
         Config::from_file(config_path).unwrap_or_else(|err| {
-            error!("Failed to load config: {}", err);
+            error!("Failed to load config: {err}");
             std::process::exit(1);
         })
     });
@@ -230,10 +230,10 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::Io(e) => write!(f, "I/O error: {}", e),
-            Error::Toml(e) => write!(f, "TOML error: {}", e),
-            Error::TomlSerialization(e) => write!(f, "TOML serialization error: {}", e),
-            Error::TomlDeserialization(e) => write!(f, "TOML deserialization error: {}", e),
+            Error::Io(e) => write!(f, "I/O error: {e}"),
+            Error::Toml(e) => write!(f, "TOML error: {e}"),
+            Error::TomlSerialization(e) => write!(f, "TOML serialization error: {e}"),
+            Error::TomlDeserialization(e) => write!(f, "TOML deserialization error: {e}"),
         }
     }
 }

@@ -57,7 +57,7 @@ fn main() -> Result<(), Error> {
             Ok(())
         }
         Err(e) => {
-            error!("An error occurred: {}", e);
+            error!("An error occurred: {e}");
             std::process::exit(1);
         }
     }
@@ -84,7 +84,7 @@ fn run() -> Result<(), Error> {
     let mut file_names: Vec<String> = Vec::with_capacity(file_contents.len());
 
     let thread_pool = ThreadPool::build(num_threads).map_err(|e| {
-        error!("Failed to create thread pool: {}", e);
+        error!("Failed to create thread pool: {e}");
         e
     })?;
     let cli = Arc::new(cli);
@@ -99,12 +99,12 @@ fn run() -> Result<(), Error> {
                 let cli = Arc::clone(&cli);
                 move || {
                     generate_static_site(cli, &file_path, &file_content).unwrap_or_else(|e| {
-                        error!("Failed to generate HTML for {}: {}", &file_path, e)
+                        error!("Failed to generate HTML for {file_path}: {e}");
                     });
                 }
             })
             .map_err(|e| {
-                error!("Failed to execute job in thread pool: {}", e);
+                error!("Failed to execute job in thread pool: {e}");
                 e
             })?;
     }
@@ -116,16 +116,13 @@ fn run() -> Result<(), Error> {
                 let index_html = generate_index(&file_names);
                 write_html_to_file(&index_html, &cli.output_dir, "index.html").unwrap_or_else(
                     |e| {
-                        error!("Failed to write index.html: {}", e);
+                        error!("Failed to write index.html: {e}");
                     },
                 );
             }
         })
         .map_err(|e| {
-            error!(
-                "Failed to execute job in thread pool for index generation: {}",
-                e
-            );
+            error!("Failed to execute job in thread pool for index generation: {e}");
             e
         })?;
 
@@ -137,15 +134,12 @@ fn run() -> Result<(), Error> {
                 let cli = Arc::clone(&cli);
                 move || {
                     copy_css_to_output_dir(css_file, &cli.output_dir).unwrap_or_else(|e| {
-                        error!("Failed to copy CSS file: {}", e);
+                        error!("Failed to copy CSS file: {e}");
                     });
                 }
             })
             .map_err(|e| {
-                error!(
-                    "Failed to execute job in thread pool for copying CSS file: {}",
-                    e
-                );
+                error!("Failed to execute job in thread pool for copying CSS file: {e}");
                 e
             })?;
     } else {
@@ -156,15 +150,12 @@ fn run() -> Result<(), Error> {
                 let cli = Arc::clone(&cli);
                 move || {
                     write_default_css_file(&cli.output_dir).unwrap_or_else(|e| {
-                        error!("Failed to write default CSS file: {}", e);
+                        error!("Failed to write default CSS file: {e}");
                     });
                 }
             })
             .map_err(|e| {
-                error!(
-                    "Failed to execute job in thread pool for using default CSS: {}",
-                    e
-                );
+                error!("Failed to execute job in thread pool for using default CSS: {e}");
                 e
             })?;
     }
@@ -177,15 +168,12 @@ fn run() -> Result<(), Error> {
                 let cli = Arc::clone(&cli);
                 move || {
                     copy_favicon_to_output_dir(favicon_path, &cli.output_dir).unwrap_or_else(|e| {
-                        error!("Failed to copy favicon: {}", e);
+                        error!("Failed to copy favicon: {e}");
                     });
                 }
             })
             .map_err(|e| {
-                error!(
-                    "Failed to execute job in thread pool for favicon copy: {}",
-                    e
-                );
+                error!("Failed to execute job in thread pool for favicon copy: {e}");
                 e
             })?;
     } else {

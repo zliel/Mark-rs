@@ -51,9 +51,9 @@ impl ThreadPool {
         let job: Job = Box::new(f);
 
         self.sender.send(job).map_err(|e| {
-            warn!("Failed to send job to thread pool: {}", e);
+            warn!("Failed to send job to thread pool: {e}");
             Error::JobExecution {
-                message: format!("Failed to send job to thread pool: {}", e),
+                message: format!("Failed to send job to thread pool: {e}"),
             }
         })
     }
@@ -87,7 +87,7 @@ impl Worker {
                 }
             })
             .map_err(|e| Error::WorkerCreation {
-                message: format!("Failed to spawn thread {}: {}", id, e),
+                message: format!("Failed to spawn thread {id}: {e}"),
             })?;
 
         Ok(Worker { id, thread })
@@ -106,9 +106,9 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Error::PoolCreation { message } => write!(f, "Thread pool creation error: {}", message),
-            Error::JobExecution { message } => write!(f, "Job execution error: {}", message),
-            Error::WorkerCreation { message } => write!(f, "Worker creation error: {}", message),
+            Error::PoolCreation { message } => write!(f, "Thread pool creation error: {message}"),
+            Error::JobExecution { message } => write!(f, "Job execution error: {message}"),
+            Error::WorkerCreation { message } => write!(f, "Worker creation error: {message}"),
         }
     }
 }
