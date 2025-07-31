@@ -395,6 +395,33 @@ impl ToHtml for MdInlineElement {
     }
 }
 
+impl MdInlineElement {
+    /// Converts the inline element to a plain text representation.
+    pub fn to_plain_text(&self) -> String {
+        match self {
+            MdInlineElement::Text { content } => content.clone(),
+            MdInlineElement::Bold { content } => content
+                .iter()
+                .map(MdInlineElement::to_plain_text)
+                .collect::<Vec<_>>()
+                .join(""),
+            MdInlineElement::Italic { content } => content
+                .iter()
+                .map(MdInlineElement::to_plain_text)
+                .collect::<Vec<_>>()
+                .join(""),
+            MdInlineElement::Link { text, .. } => text
+                .iter()
+                .map(MdInlineElement::to_plain_text)
+                .collect::<Vec<_>>()
+                .join(""),
+            MdInlineElement::Image { alt_text, .. } => alt_text.clone(),
+            MdInlineElement::Code { content } => content.clone(),
+            MdInlineElement::Placeholder => unreachable!(),
+        }
+    }
+}
+
 /// Cursor for navigating through a vector of tokens
 ///
 /// This struct provides methods to access the current token, peek ahead or behind, and advance the
