@@ -261,3 +261,14 @@ impl From<toml_edit::de::Error> for Error {
         Error::TomlDeserialization(err)
     }
 }
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Error::Io(e) => Some(e),
+            Error::Toml(e) => Some(e),
+            Error::TomlSerialization(e) => Some(e),
+            Error::TomlDeserialization(e) => Some(e),
+        }
+    }
+}

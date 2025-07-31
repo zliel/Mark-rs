@@ -79,6 +79,7 @@ fn run() -> Result<(), Error> {
     env_logger::Builder::from_env(env).init();
 
     init_config(config_path)?;
+    let config = CONFIG.get().unwrap();
     let file_contents = read_input_dir(input_dir, run_recursively)?;
     let mut file_names: Vec<String> = Vec::with_capacity(file_contents.len());
 
@@ -92,13 +93,15 @@ fn run() -> Result<(), Error> {
         info!("Generating HTML for file: {}", file_path);
 
         file_names.push(file_path.clone());
-        let cli_clone = Arc::clone(&cli);
 
         thread_pool
-            .execute(move || {
-                generate_static_site(cli_clone, &file_path, &file_content).unwrap_or_else(|e| {
-                    error!("Failed to generate HTML for {}: {}", &file_path, e)
-                });
+            .execute({
+                let cli = Arc::clone(&cli);
+                move || {
+                    generate_static_site(cli, &file_path, &file_content).unwrap_or_else(|e| {
+                        error!("Failed to generate HTML for {}: {}", &file_path, e)
+                    });
+                }
             })
             .map_err(|e| {
                 error!("Failed to execute job in thread pool: {}", e);
@@ -106,27 +109,90 @@ fn run() -> Result<(), Error> {
             })?;
     }
 
-    thread_pool.join_all();
+    thread_pool
+        .execute({
+            let cli = Arc::clone(&cli);
+            move || {
+                let index_html = generate_index(&file_names);
+                write_html_to_file(&index_html, &cli.output_dir, "index.html").unwrap_or_else(
+                    |e| {
+                        error!("Failed to write index.html: {}", e);
+                    },
+                );
+            }
+        })
+        .map_err(|e| {
+            error!(
+                "Failed to execute job in thread pool for index generation: {}",
+                e
+            );
+            e
+        })?;
 
-    let index_html = generate_index(&file_names);
-    write_html_to_file(&index_html, &cli.output_dir, "index.html")?;
-
-    let css_file = &CONFIG.get().unwrap().html.css_file;
+    let css_file = &config.html.css_file;
     if css_file != "default" && !css_file.is_empty() {
         info!("Using custom CSS file: {}", css_file);
-        copy_css_to_output_dir(css_file, &cli.output_dir)?;
+        thread_pool
+            .execute({
+                let cli = Arc::clone(&cli);
+                move || {
+                    copy_css_to_output_dir(css_file, &cli.output_dir).unwrap_or_else(|e| {
+                        error!("Failed to copy CSS file: {}", e);
+                    });
+                }
+            })
+            .map_err(|e| {
+                error!(
+                    "Failed to execute job in thread pool for copying CSS file: {}",
+                    e
+                );
+                e
+            })?;
     } else {
         info!("Using default CSS file.");
-        write_default_css_file(&cli.output_dir)?;
+
+        thread_pool
+            .execute({
+                let cli = Arc::clone(&cli);
+                move || {
+                    write_default_css_file(&cli.output_dir).unwrap_or_else(|e| {
+                        error!("Failed to write default CSS file: {}", e);
+                    });
+                }
+            })
+            .map_err(|e| {
+                error!(
+                    "Failed to execute job in thread pool for using default CSS: {}",
+                    e
+                );
+                e
+            })?;
     }
 
-    let favicon_path = &CONFIG.get().unwrap().html.favicon_file;
+    let favicon_path = &config.html.favicon_file;
     if !favicon_path.is_empty() {
         info!("Copying favicon from: {}", favicon_path);
-        copy_favicon_to_output_dir(favicon_path, &cli.output_dir)?;
+        thread_pool
+            .execute({
+                let cli = Arc::clone(&cli);
+                move || {
+                    copy_favicon_to_output_dir(favicon_path, &cli.output_dir).unwrap_or_else(|e| {
+                        error!("Failed to copy favicon: {}", e);
+                    });
+                }
+            })
+            .map_err(|e| {
+                error!(
+                    "Failed to execute job in thread pool for favicon copy: {}",
+                    e
+                );
+                e
+            })?;
     } else {
         info!("No favicon specified in config.");
     }
+
+    thread_pool.join_all();
 
     Ok(())
 }

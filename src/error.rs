@@ -38,3 +38,13 @@ impl From<thread_pool::Error> for Error {
         Error::ThreadPool(error)
     }
 }
+
+impl std::error::Error for Error {
+    fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
+        match self {
+            Error::Io(e) => Some(e),
+            Error::Config(e) => Some(e),
+            Error::ThreadPool(e) => Some(e),
+        }
+    }
+}
