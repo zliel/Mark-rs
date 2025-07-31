@@ -82,7 +82,20 @@ impl ToHtml for MdBlockElement {
                     .map(|el| el.to_html(output_dir, input_dir, html_rel_path))
                     .collect::<String>();
 
-                format!("\n<h{level}>{inner_html}</h{level}>\n")
+                let id = content
+                    .iter()
+                    .map(MdInlineElement::to_plain_text)
+                    .collect::<String>()
+                    .to_lowercase()
+                    .replace([' ', '_'], "-")
+                    .replace(
+                        [
+                            '<', '>', '/', '\\', '"', '\'', '&', '`', ',', '?', '!', '.', ':', ';',
+                        ],
+                        "",
+                    );
+
+                format!("\n<h{level} id=\"{id}\">{inner_html}</h{level}>\n")
             }
             MdBlockElement::Paragraph { content } => {
                 let inner_html = content
