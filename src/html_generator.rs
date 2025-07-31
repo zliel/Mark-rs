@@ -60,6 +60,9 @@ pub fn generate_html(
                     "allowfullscreen",
                 ],
             );
+        for tag in &["h1", "h2", "h3", "h4", "h5", "h6"] {
+            builder.add_tag_attributes(tag, &["id"]);
+        }
 
         builder.clean(&inner_html).to_string()
     } else {
