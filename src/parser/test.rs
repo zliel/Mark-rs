@@ -1981,7 +1981,7 @@ mod html_generation {
                 .iter()
                 .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
                 .collect::<String>(),
-                "\n<h1 id=\"this-is-a-heading-with-strongbold-textstrong-and-emitalic-textem\">This is a heading with <strong>bold text</strong> and <em>italic text</em>.</h1>\n<div>Some raw HTML content</div>\n"
+                "\n<h1 id=\"this-is-a-heading-with-bold-text-and-italic-text\">This is a heading with <strong>bold text</strong> and <em>italic text</em>.</h1>\n<div>Some raw HTML content</div>\n"
             );
         }
 
