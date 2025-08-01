@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Error"],"fn":["default_css","default_prism_theme","default_tab_size","init_config","sanitize_by_default","validate_config"],"struct":["Config","HtmlConfig","LexerConfig"]};
