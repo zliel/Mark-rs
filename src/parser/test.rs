@@ -1766,7 +1766,7 @@ mod html_generation {
                     .iter()
                     .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
                     .collect::<String>(),
-                "\n<h1>Heading 1</h1>\n"
+                "\n<h1 id=\"heading-1\">Heading 1</h1>\n"
             );
         }
 
@@ -1778,7 +1778,7 @@ mod html_generation {
                     .iter()
                     .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
                     .collect::<String>(),
-                "\n<h3>Heading 3</h3>\n"
+                "\n<h3 id=\"heading-3\">Heading 3</h3>\n"
             );
         }
 
@@ -1790,7 +1790,7 @@ mod html_generation {
                     .iter()
                     .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
                     .collect::<String>(),
-                "\n<h2>Heading 2 with <b>bold words</b></h2>\n"
+                "\n<h2 id=\"heading-2-with-bold-words\">Heading 2 with <b>bold words</b></h2>\n"
             );
         }
 
@@ -1934,7 +1934,7 @@ mod html_generation {
                 .iter()
                 .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
                 .collect::<String>(),
-                "<blockquote>\n<p>This is a blockquote with a nested heading:</p>\n<h1>Heading 1</h1>\n\n</blockquote>"
+                "<blockquote>\n<p>This is a blockquote with a nested heading:</p>\n<h1 id=\"heading-1\">Heading 1</h1>\n\n</blockquote>"
             );
         }
 
@@ -1969,6 +1969,9 @@ mod html_generation {
 
         #[test]
         fn mixed_markdown_and_html() {
+            // Note that this heading's id is abnormal because RawHtml Tokens don't store the
+            // token content between tags, only the content of the tags themselves.
+            // This is only a problem if headings contain raw html.
             init_test_config();
             assert_eq!(
                 parse_blocks(&group_lines_to_blocks(vec![
@@ -1978,7 +1981,7 @@ mod html_generation {
                 .iter()
                 .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
                 .collect::<String>(),
-                "\n<h1>This is a heading with <strong>bold text</strong> and <em>italic text</em>.</h1>\n<div>Some raw HTML content</div>\n"
+                "\n<h1 id=\"this-is-a-heading-with-bold-text-and-italic-text\">This is a heading with <strong>bold text</strong> and <em>italic text</em>.</h1>\n<div>Some raw HTML content</div>\n"
             );
         }
 

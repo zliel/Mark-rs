@@ -82,7 +82,15 @@ impl ToHtml for MdBlockElement {
                     .map(|el| el.to_html(output_dir, input_dir, html_rel_path))
                     .collect::<String>();
 
-                format!("\n<h{level}>{inner_html}</h{level}>\n")
+                let id = content
+                    .iter()
+                    .map(MdInlineElement::to_plain_text)
+                    .collect::<String>();
+
+                let id = clean_id(id);
+                println!("Header ID: {id}");
+
+                format!("\n<h{level} id=\"{id}\">{inner_html}</h{level}>\n")
             }
             MdBlockElement::Paragraph { content } => {
                 let inner_html = content
@@ -175,6 +183,31 @@ impl ToHtml for MdBlockElement {
             }
         }
     }
+}
+
+/// Cleans the ID string by removing HTML tags and special characters, and replacing spaces and underscores with hyphens.
+fn clean_id(old_id: String) -> String {
+    let mut new_id = String::new();
+
+    let mut in_tag = false;
+    for char in old_id.chars() {
+        if char == '<' {
+            in_tag = true;
+        } else if char == '>' {
+            in_tag = false;
+            continue;
+        }
+
+        if !in_tag && (char.is_alphanumeric() || char == '_' || char == ' ') {
+            new_id.push(char);
+        }
+    }
+
+    new_id
+        .replace([' ', '_'], "-")
+        .to_lowercase()
+        .trim_matches('-')
+        .to_string()
 }
 
 /// Represents a list item in markdown, which can contain block elements.
@@ -377,6 +410,33 @@ impl ToHtml for MdInlineElement {
                 }
             }
             MdInlineElement::Code { content } => format!("<code>{content}</code>"),
+            MdInlineElement::Placeholder => unreachable!(),
+        }
+    }
+}
+
+impl MdInlineElement {
+    /// Converts the inline element to a plain text representation.
+    pub fn to_plain_text(&self) -> String {
+        match self {
+            MdInlineElement::Text { content } => content.clone(),
+            MdInlineElement::Bold { content } => content
+                .iter()
+                .map(MdInlineElement::to_plain_text)
+                .collect::<Vec<_>>()
+                .join(""),
+            MdInlineElement::Italic { content } => content
+                .iter()
+                .map(MdInlineElement::to_plain_text)
+                .collect::<Vec<_>>()
+                .join(""),
+            MdInlineElement::Link { text, .. } => text
+                .iter()
+                .map(MdInlineElement::to_plain_text)
+                .collect::<Vec<_>>()
+                .join(""),
+            MdInlineElement::Image { alt_text, .. } => alt_text.clone(),
+            MdInlineElement::Code { content } => content.clone(),
             MdInlineElement::Placeholder => unreachable!(),
         }
     }

@@ -43,7 +43,7 @@ pub fn read_input_dir(
         Ok(file_contents)
     } else {
         let entries: ReadDir = read_dir(input_dir).map_err(|e| {
-            error!("Failed to read input directory '{}': {}", input_dir, e);
+            error!("Failed to read input directory '{input_dir}': {e}");
             e
         })?;
 
@@ -98,7 +98,7 @@ fn visit_dir(
         } else if path.extension().and_then(|s| s.to_str()) == Some("md") {
             let rel_path = path
                 .strip_prefix(base)
-                .map_err(|e| io::Error::other(format!("Failed to strip base path: {}", e)))?
+                .map_err(|e| io::Error::other(format!("Failed to strip base path: {e}")))?
                 .to_string_lossy()
                 .to_string();
             let contents = read_file(path.to_str().unwrap()).map_err(|e| {
