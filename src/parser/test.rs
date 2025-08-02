@@ -1923,7 +1923,7 @@ mod html_generation {
                 .iter()
                 .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
                 .collect::<String>(),
-                "<ol start=\"1\">\n\t<li>\n\t\t<p>Item 1</p>\n\t</li>\n\t<ol>\n\t<li>\n\t\t<p>Nested Item 1.1</p>\n\t</li>\n\t<li>\n\t\t<p>Nested Item 1.2</p>\n\t</li>\n\n\t</ol><li>\n\t\t<p>Item 2</p>\n\t</li>\n</ol>"
+                "<ol start=\"1\">\n\t<li>\n\t\t<p>Item 1</p>\n\t</li>\n\t<ol start=\"1\">\n\t<li>\n\t\t<p>Nested Item 1.1</p>\n\t</li>\n\t<li>\n\t\t<p>Nested Item 1.2</p>\n\t</li>\n\n\t</ol><li>\n\t\t<p>Item 2</p>\n\t</li>\n</ol>"
             );
         }
 
