@@ -227,6 +227,11 @@ fn parse_blockquote(line: &[Token]) -> MdBlockElement {
 /// # Returns
 /// An `MdBlockElement` representing the ordered list.
 fn parse_ordered_list(list: &[Token]) -> MdBlockElement {
+    let starting_num = if let Some(Token::OrderedListMarker(num)) = list.first() {
+        num.parse::<usize>().unwrap_or(1)
+    } else {
+        1
+    };
     parse_list(
         list,
         |tokens| {
@@ -235,7 +240,10 @@ fn parse_ordered_list(list: &[Token]) -> MdBlockElement {
                 Some(Token::OrderedListMarker(_)) if tokens.get(1) == Some(&Token::Whitespace)
             )
         },
-        |items| MdBlockElement::OrderedList { items },
+        |items| MdBlockElement::OrderedList {
+            items,
+            starting_num,
+        },
     )
 }
 
