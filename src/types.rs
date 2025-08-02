@@ -59,6 +59,7 @@ pub enum MdBlockElement {
         items: Vec<MdListItem>,
     },
     OrderedList {
+        starting_num: usize,
         items: Vec<MdListItem>,
     },
     Table {
@@ -88,7 +89,6 @@ impl ToHtml for MdBlockElement {
                     .collect::<String>();
 
                 let id = clean_id(id);
-                println!("Header ID: {id}");
 
                 format!("\n<h{level} id=\"{id}\">{inner_html}</h{level}>\n")
             }
@@ -130,14 +130,17 @@ impl ToHtml for MdBlockElement {
                 let inner_items = indent_html(&inner_items, 1);
                 format!("<ul>\n{inner_items}\n</ul>")
             }
-            MdBlockElement::OrderedList { items } => {
+            MdBlockElement::OrderedList {
+                items,
+                starting_num,
+            } => {
                 let inner_items = items
                     .iter()
                     .map(|item| item.to_html(output_dir, input_dir, html_rel_path))
                     .collect::<String>();
 
                 let inner_items = indent_html(&inner_items, 1);
-                format!("<ol>\n{inner_items}\n</ol>")
+                format!("<ol start=\"{starting_num}\">\n{inner_items}\n</ol>")
             }
             MdBlockElement::Table { headers, body } => {
                 let header_html = headers
@@ -230,12 +233,15 @@ impl ToHtml for MdListItem {
                 let inner_items = indent_html(&inner_items, 1);
                 format!("<ul>\n{inner_items}\n</ul>")
             }
-            MdBlockElement::OrderedList { items } => {
+            MdBlockElement::OrderedList {
+                items,
+                starting_num,
+            } => {
                 let inner_items = items
                     .iter()
                     .map(|item| item.to_html(output_dir, input_dir, html_rel_path))
                     .collect::<String>();
-                format!("<ol>\n{inner_items}\n</ol>")
+                format!("<ol start=\"{starting_num}\">\n{inner_items}\n</ol>")
             }
             _ => {
                 let inner_html = indent_html(

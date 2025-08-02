@@ -140,22 +140,22 @@ pub fn tokenize(markdown_line: &str) -> Vec<Token> {
                 }
             }
             "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" => {
-                // Check for valid ordered list marker
-                if i + 2 < str_len && chars[i + 1] == "." && chars[i + 2] == " " {
-                    // Check if the line STARTS with a number followed by a dot and space
-                    if i == 0 || tokens.last() == Some(&Token::Tab) {
-                        push_buffer_to_collection(&mut tokens, &mut buffer);
-                        tokens.push(Token::OrderedListMarker(chars[i].to_owned() + chars[i + 1]));
+                let mut marker = String::from(chars[i]);
+                while i + 1 < str_len && chars[i + 1].chars().next().unwrap().is_ascii_digit() {
+                    i += 1;
+                    marker.push_str(chars[i]);
+                }
 
-                        i += 2;
-                        continue;
-                    } else {
-                        // If the line does not start with a number followed by a dot and space,
-                        // treat it as a regular text token
-                        buffer.push_str(chars[i]);
-                    }
+                if i + 1 < str_len && chars[i + 1] != "." {
+                    buffer.push_str(&marker);
+                } else if i + 2 < str_len && chars[i + 2] == " " {
+                    push_buffer_to_collection(&mut tokens, &mut buffer);
+                    tokens.push(Token::OrderedListMarker(marker));
+
+                    i += 2;
+                    continue;
                 } else {
-                    buffer.push_str(chars[i]);
+                    buffer.push_str(&marker);
                 }
             }
             "\t" => {
