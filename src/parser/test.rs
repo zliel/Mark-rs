@@ -770,6 +770,7 @@ mod block {
                 tokenize("4. ![Image Item 4](http://example.com/image.png)"),
             ])),
             vec![OrderedList {
+                starting_num: 1,
                 items: vec![
                     MdListItem {
                         content: Paragraph {
@@ -823,6 +824,7 @@ mod block {
                 tokenize("2. Second")
             ])),
             vec![OrderedList {
+                starting_num: 1,
                 items: vec![
                     MdListItem {
                         content: Paragraph {
@@ -854,6 +856,7 @@ mod block {
                 tokenize("2. Item 2")
             ])),
             vec![OrderedList {
+                starting_num: 1,
                 items: vec![
                     MdListItem {
                         content: Paragraph {
@@ -864,6 +867,7 @@ mod block {
                     },
                     MdListItem {
                         content: OrderedList {
+                            starting_num: 1,
                             items: vec![
                                 MdListItem {
                                     content: Paragraph {
@@ -895,6 +899,36 @@ mod block {
     }
 
     #[test]
+    fn ordered_list_with_different_starting_num() {
+        init_test_config();
+        assert_eq!(
+            parse_blocks(&group_lines_to_blocks(vec![
+                tokenize("5. Fifth Item"),
+                tokenize("6. Sixth Item")
+            ])),
+            vec![OrderedList {
+                starting_num: 5,
+                items: vec![
+                    MdListItem {
+                        content: Paragraph {
+                            content: vec![Text {
+                                content: String::from("Fifth Item")
+                            }]
+                        }
+                    },
+                    MdListItem {
+                        content: Paragraph {
+                            content: vec![Text {
+                                content: String::from("Sixth Item")
+                            }]
+                        }
+                    }
+                ]
+            }]
+        );
+    }
+
+    #[test]
     fn ordered_list_with_inlines() {
         init_test_config();
         assert_eq!(
@@ -905,6 +939,7 @@ mod block {
                 tokenize("4. ![Image Item 4](http://example.com/image.png \"Some title\")"),
             ])),
             vec![OrderedList {
+                starting_num: 1,
                 items: vec![
                     MdListItem {
                         content: Paragraph {
@@ -1871,7 +1906,7 @@ mod html_generation {
                 .iter()
                 .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
                 .collect::<String>(),
-                "<ol>\n\t<li>\n\t\t<p>First</p>\n\t</li>\n\t<li>\n\t\t<p>Second</p>\n\t</li>\n</ol>"
+                "<ol start=\"1\">\n\t<li>\n\t\t<p>First</p>\n\t</li>\n\t<li>\n\t\t<p>Second</p>\n\t</li>\n</ol>"
             );
         }
 
@@ -1888,7 +1923,7 @@ mod html_generation {
                 .iter()
                 .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
                 .collect::<String>(),
-                "<ol>\n\t<li>\n\t\t<p>Item 1</p>\n\t</li>\n\t<ol>\n\t<li>\n\t\t<p>Nested Item 1.1</p>\n\t</li>\n\t<li>\n\t\t<p>Nested Item 1.2</p>\n\t</li>\n\n\t</ol><li>\n\t\t<p>Item 2</p>\n\t</li>\n</ol>"
+                "<ol start=\"1\">\n\t<li>\n\t\t<p>Item 1</p>\n\t</li>\n\t<ol>\n\t<li>\n\t\t<p>Nested Item 1.1</p>\n\t</li>\n\t<li>\n\t\t<p>Nested Item 1.2</p>\n\t</li>\n\n\t</ol><li>\n\t\t<p>Item 2</p>\n\t</li>\n</ol>"
             );
         }
 
@@ -1905,7 +1940,22 @@ mod html_generation {
                 .iter()
                 .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
                 .collect::<String>(),
-                "<ol>\n\t<li>\n\t\t<p><b>Bold Item 1</b></p>\n\t</li>\n\t<li>\n\t\t<p><i>Italic Item 2</i></p>\n\t</li>\n\t<li>\n\t\t<p><a href=\"http://example.com\" target=\"_blank\">Link Item 3⮺</a></p>\n\t</li>\n\t<li>\n\t\t<p><img src=\"http://example.com/image.png\" alt=\"Image Item 4\" title=\"Some title\"/></p>\n\t</li>\n</ol>"
+                "<ol start=\"1\">\n\t<li>\n\t\t<p><b>Bold Item 1</b></p>\n\t</li>\n\t<li>\n\t\t<p><i>Italic Item 2</i></p>\n\t</li>\n\t<li>\n\t\t<p><a href=\"http://example.com\" target=\"_blank\">Link Item 3⮺</a></p>\n\t</li>\n\t<li>\n\t\t<p><img src=\"http://example.com/image.png\" alt=\"Image Item 4\" title=\"Some title\"/></p>\n\t</li>\n</ol>"
+            );
+        }
+
+        #[test]
+        fn ordered_list_with_different_starting_num() {
+            init_test_config();
+            assert_eq!(
+                parse_blocks(&group_lines_to_blocks(vec![
+                    tokenize("5. Item 5"),
+                    tokenize("6. Item 6")
+                ]))
+                .iter()
+                .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
+                .collect::<String>(),
+                "<ol start=\"5\">\n\t<li>\n\t\t<p>Item 5</p>\n\t</li>\n\t<li>\n\t\t<p>Item 6</p>\n\t</li>\n</ol>"
             );
         }
 
