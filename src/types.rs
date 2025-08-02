@@ -140,7 +140,7 @@ impl ToHtml for MdBlockElement {
                     .collect::<String>();
 
                 let inner_items = indent_html(&inner_items, 1);
-                format!("<ol>\n{inner_items}\n</ol>")
+                format!("<ol start=\"{starting_num}\">\n{inner_items}\n</ol>")
             }
             MdBlockElement::Table { headers, body } => {
                 let header_html = headers
@@ -241,7 +241,7 @@ impl ToHtml for MdListItem {
                     .iter()
                     .map(|item| item.to_html(output_dir, input_dir, html_rel_path))
                     .collect::<String>();
-                format!("<ol>\n{inner_items}\n</ol>")
+                format!("<ol start=\"{starting_num}\">\n{inner_items}\n</ol>")
             }
             _ => {
                 let inner_html = indent_html(
