@@ -49,7 +49,7 @@ fn parse_block(line: &[Token]) -> Option<MdBlockElement> {
         Some(Token::Punctuation(string)) if string == "-" || string == "*" => {
             // Note that setext headings have already been handled in the group_lines_to_blocks
             // function by this point
-            if line.len() == 1 {
+            if line.len() == 1 && string == "-" {
                 // If the line only contains a dash, then it is a thematic break
                 Some(MdBlockElement::ThematicBreak)
             } else {
