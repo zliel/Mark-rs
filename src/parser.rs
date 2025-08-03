@@ -1352,7 +1352,8 @@ fn group_tabbed_lines(
             let previous_line_start = previous_block.first();
             match previous_line_start {
                 Some(Token::Punctuation(string))
-                    if string == "-" && previous_block.get(1) == Some(&Token::Whitespace) =>
+                    if (string == "-" || string == "*")
+                        && previous_block.get(1) == Some(&Token::Whitespace) =>
                 {
                     // If the previous block is a list, then we append the line to it
                     attach_to_previous_block(blocks, previous_block, line, Some(Token::Newline));
