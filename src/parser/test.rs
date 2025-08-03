@@ -760,6 +760,172 @@ mod block {
     }
 
     #[test]
+    fn unordered_list_using_asterisks() {
+        init_test_config();
+        assert_eq!(
+            parse_blocks(&group_lines_to_blocks(vec![
+                tokenize("* Item 1"),
+                tokenize("* Item 2")
+            ])),
+            vec![UnorderedList {
+                items: vec![
+                    MdListItem {
+                        content: Paragraph {
+                            content: vec![Text {
+                                content: String::from("Item 1")
+                            }]
+                        }
+                    },
+                    MdListItem {
+                        content: Paragraph {
+                            content: vec![Text {
+                                content: String::from("Item 2")
+                            }]
+                        }
+                    }
+                ]
+            }]
+        );
+    }
+
+    #[test]
+    fn unordered_nested_list_with_asterisks() {
+        init_test_config();
+        assert_eq!(
+            parse_blocks(&group_lines_to_blocks(vec![
+                tokenize("* Item 1"),
+                tokenize("    * Nested Item 1.1"),
+                tokenize("    * Nested Item 1.2"),
+                tokenize("* Item 2")
+            ])),
+            vec![UnorderedList {
+                items: vec![
+                    MdListItem {
+                        content: Paragraph {
+                            content: vec![Text {
+                                content: String::from("Item 1")
+                            }]
+                        }
+                    },
+                    MdListItem {
+                        content: UnorderedList {
+                            items: vec![
+                                MdListItem {
+                                    content: Paragraph {
+                                        content: vec![Text {
+                                            content: String::from("Nested Item 1.1")
+                                        }]
+                                    }
+                                },
+                                MdListItem {
+                                    content: Paragraph {
+                                        content: vec![Text {
+                                            content: String::from("Nested Item 1.2")
+                                        }]
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    MdListItem {
+                        content: Paragraph {
+                            content: vec![Text {
+                                content: String::from("Item 2")
+                            }]
+                        }
+                    }
+                ]
+            }]
+        );
+    }
+
+    #[test]
+    fn unordered_list_with_mixed_delimiters() {
+        init_test_config();
+        assert_eq!(
+            parse_blocks(&group_lines_to_blocks(vec![
+                tokenize("- Item 1"),
+                tokenize("* New List")
+            ])),
+            vec![
+                UnorderedList {
+                    items: vec![MdListItem {
+                        content: Paragraph {
+                            content: vec![Text {
+                                content: String::from("Item 1")
+                            }]
+                        }
+                    }]
+                },
+                UnorderedList {
+                    items: vec![MdListItem {
+                        content: Paragraph {
+                            content: vec![Text {
+                                content: String::from("New List")
+                            }]
+                        }
+                    }]
+                }
+            ]
+        );
+    }
+
+    #[test]
+    fn unordered_nested_list_with_mixed_delimiters() {
+        init_test_config();
+        assert_eq!(
+            parse_blocks(&group_lines_to_blocks(vec![
+                tokenize("- Item 1"),
+                tokenize("    * Nested Item 1.1"),
+                tokenize("    - Nested Item 1.2"),
+                tokenize("* Item 2")
+            ])),
+            vec![
+                UnorderedList {
+                    items: vec![
+                        MdListItem {
+                            content: Paragraph {
+                                content: vec![Text {
+                                    content: String::from("Item 1")
+                                }]
+                            }
+                        },
+                        MdListItem {
+                            content: UnorderedList {
+                                items: vec![
+                                    MdListItem {
+                                        content: Paragraph {
+                                            content: vec![Text {
+                                                content: String::from("Nested Item 1.1")
+                                            }]
+                                        }
+                                    },
+                                    MdListItem {
+                                        content: Paragraph {
+                                            content: vec![Text {
+                                                content: String::from("Nested Item 1.2")
+                                            }]
+                                        }
+                                    }
+                                ]
+                            }
+                        },
+                    ]
+                },
+                UnorderedList {
+                    items: vec![MdListItem {
+                        content: Paragraph {
+                            content: vec![Text {
+                                content: String::from("Item 2")
+                            }]
+                        }
+                    }]
+                }
+            ]
+        );
+    }
+
+    #[test]
     fn unordered_list_with_inlines() {
         init_test_config();
         assert_eq!(
@@ -1879,6 +2045,21 @@ mod html_generation {
         }
 
         #[test]
+        fn unordered_list_using_asterisks() {
+            init_test_config();
+            assert_eq!(
+                parse_blocks(&group_lines_to_blocks(vec![
+                    tokenize("* Item 1"),
+                    tokenize("* Item 2")
+                ]))
+                .iter()
+                .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
+                .collect::<String>(),
+                "<ul>\n\t<li>\n\t\t<p>Item 1</p>\n\t</li>\n\t<li>\n\t\t<p>Item 2</p>\n\t</li>\n</ul>"
+            );
+        }
+
+        #[test]
         fn unordered_list_with_nested_items() {
             init_test_config();
             assert_eq!(
@@ -1892,6 +2073,57 @@ mod html_generation {
                 .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
                 .collect::<String>(),
                 "<ul>\n\t<li>\n\t\t<p>Item 1</p>\n\t</li>\n\t<ul>\n\t\t<li>\n\t\t\t<p>Nested Item 1.1</p>\n\t\t</li>\n\t\t<li>\n\t\t\t<p>Nested Item 1.2</p>\n\t\t</li>\n\t</ul><li>\n\t\t<p>Item 2</p>\n\t</li>\n</ul>"
+            );
+        }
+
+        #[test]
+        fn unordered_nested_list_with_asterisks() {
+            init_test_config();
+            assert_eq!(
+                parse_blocks(&group_lines_to_blocks(vec![
+                    tokenize("* Item 1"),
+                    tokenize("    * Nested Item 1.1"),
+                    tokenize("    * Nested Item 1.2"),
+                    tokenize("* Item 2")
+                ]))
+                .iter()
+                .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
+                .collect::<String>(),
+                "<ul>\n\t<li>\n\t\t<p>Item 1</p>\n\t</li>\n\t<ul>\n\t\t<li>\n\t\t\t<p>Nested Item 1.1</p>\n\t\t</li>\n\t\t<li>\n\t\t\t<p>Nested Item 1.2</p>\n\t\t</li>\n\t</ul><li>\n\t\t<p>Item 2</p>\n\t</li>\n</ul>"
+            );
+        }
+
+        #[test]
+        fn unordered_list_with_mixed_delimiters() {
+            // Will be two separate lists
+            init_test_config();
+            assert_eq!(
+                parse_blocks(&group_lines_to_blocks(vec![
+                    tokenize("- Item 1"),
+                    tokenize("* Item 2"),
+                ]))
+                .iter()
+                .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
+                .collect::<String>(),
+                "<ul>\n\t<li>\n\t\t<p>Item 1</p>\n\t</li>\n</ul><ul>\n\t<li>\n\t\t<p>Item 2</p>\n\t</li>\n</ul>"
+            );
+        }
+
+        #[test]
+        fn unordered_nested_list_with_mixed_delimiters() {
+            // Will be two separate lists
+            init_test_config();
+            assert_eq!(
+                parse_blocks(&group_lines_to_blocks(vec![
+                    tokenize("- Item 1"),
+                    tokenize("    * Nested Item 1.1"),
+                    tokenize("    - Nested Item 1.2"),
+                    tokenize("* Item 2")
+                ]))
+                .iter()
+                .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
+                .collect::<String>(),
+                "<ul>\n\t<li>\n\t\t<p>Item 1</p>\n\t</li>\n\t<ul>\n\t\t<li>\n\t\t\t<p>Nested Item 1.1</p>\n\t\t</li>\n\t\t<li>\n\t\t\t<p>Nested Item 1.2</p>\n\t\t</li>\n\t</ul>\n</ul><ul>\n\t<li>\n\t\t<p>Item 2</p>\n\t</li>\n</ul>"
             );
         }
 
