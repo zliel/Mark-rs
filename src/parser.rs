@@ -46,7 +46,7 @@ fn parse_block(line: &[Token]) -> Option<MdBlockElement> {
 
     match first_token {
         Some(Token::Punctuation(string)) if string == "#" => Some(parse_heading(line)),
-        Some(Token::Punctuation(string)) if string == "-" => {
+        Some(Token::Punctuation(string)) if string == "-" || string == "*" => {
             // Note that setext headings have already been handled in the group_lines_to_blocks
             // function by this point
             if line.len() == 1 {
@@ -260,7 +260,7 @@ fn parse_unordered_list(list: &[Token]) -> MdBlockElement {
     parse_list(
         list,
         |tokens| {
-            matches!(tokens.first(), Some(Token::Punctuation(string)) if string == "-" && tokens.get(1) == Some(&Token::Whitespace)
+            matches!(tokens.first(), Some(Token::Punctuation(string)) if (string == "-" || string == "*") && tokens.get(1) == Some(&Token::Whitespace)
             )
         },
         |items| MdBlockElement::UnorderedList { items },
