@@ -912,13 +912,8 @@ fn flatten_inline(elements: &[MdInlineElement]) -> String {
     result
 }
 
-/// Parses (resolves) emphasis in a vector of inline Markdown elements.
-///
-/// Modifies the elements in place to convert delimiter runs into bold or italic elements as appropriate.
-///
-/// # Arguments
-/// * `elements` - A mutable reference to a vector of inline Markdown elements.
-/// * `delimiter_stack` - A mutable reference to a slice of delimiters.
+/// Wrapper function to start the call chain for `resolve_emphasis_recursive` if there is more than
+/// one delimiter in the stack.
 fn resolve_emphasis(elements: &mut Vec<MdInlineElement>, delimiter_stack: &mut [Delimiter]) {
     if delimiter_stack.len() == 1 {
         // If there is only one delimiter, it cannot be resolved to emphasis
@@ -929,105 +924,136 @@ fn resolve_emphasis(elements: &mut Vec<MdInlineElement>, delimiter_stack: &mut [
         }
         return;
     }
+    resolve_emphasis_recursive(elements, delimiter_stack, 0);
+}
 
-    for i in 0..delimiter_stack.len() {
-        if !delimiter_stack[i].active || !delimiter_stack[i].can_close {
+/// Recursively parses (resolves) emphasis in a vector of inline Markdown elements.
+///
+/// Modifies the elements in place to convert delimiter runs into bold or italic elements as appropriate.
+///
+/// # Arguments
+/// * `elements` - A mutable reference to a vector of inline Markdown elements.
+/// * `delimiter_stack` - A mutable reference to a slice of delimiters.
+fn resolve_emphasis_recursive(
+    elements: &mut Vec<MdInlineElement>,
+    delimiter_stack: &mut [Delimiter],
+    index: usize,
+) {
+    if index >= delimiter_stack.len() {
+        delimiter_stack.iter_mut().for_each(|el| {
+            if el.active && el.parsed_position < elements.len() {
+                let element_to_insert = MdInlineElement::Text {
+                    content: el.ch.to_string().repeat(el.run_length),
+                };
+                elements.insert(el.parsed_position, element_to_insert);
+            }
+        });
+        return;
+    }
+
+    if !delimiter_stack[index].active || !delimiter_stack[index].can_close {
+        resolve_emphasis_recursive(elements, delimiter_stack, index + 1);
+        return;
+    }
+
+    let closer = delimiter_stack[index].clone();
+
+    for j in (0..index).rev() {
+        if !delimiter_stack[j].active || !delimiter_stack[j].can_open {
             continue;
         }
 
-        // At this point we have a valid closer
-        let closer = delimiter_stack[i].clone();
+        let opener = delimiter_stack[j].clone();
 
-        for j in (0..i).rev() {
-            if !delimiter_stack[j].active || !delimiter_stack[j].can_open {
-                continue;
-            }
+        if !closer.ch.eq(&opener.ch) {
+            continue;
+        }
 
-            let opener = delimiter_stack[j].clone();
+        // Rule of 3: If the total length of the run is a multiple of 3 and both run lengths
+        // are not divisible by 3, they are not valid for emphasis
+        let length_total = closer.run_length + opener.run_length;
+        if ((closer.can_open && closer.can_close) || (opener.can_open && opener.can_close))
+            && (length_total % 3 == 0 && closer.run_length % 3 != 0 && opener.run_length % 3 != 0)
+        {
+            continue;
+        }
 
-            // Check if the opener and closer have the same delimiter
-            if !closer.ch.eq(&opener.ch) {
-                continue;
-            }
+        let delimiters_used = if closer.run_length >= 2 && opener.run_length >= 2 {
+            2
+        } else {
+            1
+        };
 
-            // Rule of 3: If the total length of the run is a multiple of 3 and both run lengths
-            // are not divisible by 3, they are not valid for emphasis
-            let length_total = closer.run_length + opener.run_length;
-            if ((closer.can_open && closer.can_close) || (opener.can_open && opener.can_close))
-                && (length_total % 3 == 0
-                    && closer.run_length % 3 != 0
-                    && opener.run_length % 3 != 0)
+        let range_start = if opener.run_length > delimiters_used {
+            (opener.parsed_position + 1).saturating_sub(delimiters_used)
+        } else {
+            opener.parsed_position
+        };
+
+        let range_end = if closer.run_length >= delimiters_used {
+            closer.parsed_position
+        } else {
+            (closer.parsed_position + 1).saturating_sub(delimiters_used)
+        };
+
+        let mut content_slice = elements[range_start + 1..range_end].to_vec();
+
+        // Remove any hanging placeholders that map to inactive delimiters
+        for i in 0..content_slice.len() {
+            if let Some(MdInlineElement::Placeholder { ch, token_position }) = content_slice.get(i)
             {
-                continue;
+                if delimiter_stack
+                    .iter()
+                    .any(|d| !d.active && d.token_position == *token_position && d.ch == *ch)
+                {
+                    content_slice.remove(i);
+                }
             }
+        }
+        let element_to_insert = match delimiters_used {
+            2 => MdInlineElement::Bold {
+                content: content_slice,
+            },
+            1 => MdInlineElement::Italic {
+                content: content_slice,
+            },
+            _ => unreachable!(),
+        };
 
-            // Prefer making bold connections first
-            let delimiters_used = if closer.run_length >= 2 && opener.run_length >= 2 {
-                2
-            } else {
-                1
-            };
 
-            // Replace the placeholders with the new element
-            let range_start = if opener.run_length > delimiters_used {
-                opener.parsed_position + 1
-            } else {
-                opener.parsed_position
-            };
-
-            let range_end = if closer.run_length >= delimiters_used {
-                closer.parsed_position
-            } else {
-                closer.parsed_position + 1
-            };
-
-            // Map the delimiters used to bold/italic respectively
-            let element_to_insert = match delimiters_used {
-                2 => MdInlineElement::Bold {
-                    content: elements[range_start + 1..range_end].to_vec(),
-                },
-                1 => MdInlineElement::Italic {
-                    content: elements[range_start + 1..range_end].to_vec(),
-                },
-                _ => unreachable!(),
-            };
-
+        if closer.run_length > delimiters_used {
+            elements[closer.parsed_position - 1] = element_to_insert;
+        } else {
             elements.splice(range_start..=range_end, vec![element_to_insert]);
             let num_elements_removed = range_end - range_start;
-
-            // closer.parsed_position -= num_elements_removed;
-
-            // Update the parsed positions of the delimiters
             (0..delimiter_stack.len()).for_each(|k| {
                 if delimiter_stack[k].parsed_position > closer.parsed_position {
                     delimiter_stack[k].parsed_position -= num_elements_removed;
                 }
             });
-
-            delimiter_stack[i].run_length = delimiter_stack[i]
-                .run_length
-                .saturating_sub(delimiters_used);
-            delimiter_stack[j].run_length = delimiter_stack[j]
-                .run_length
-                .saturating_sub(delimiters_used);
-
-            if delimiter_stack[i].run_length == 0 {
-                delimiter_stack[i].active = false;
-            }
-            if delimiter_stack[j].run_length == 0 {
-                delimiter_stack[j].active = false;
-            }
         }
+
+        delimiter_stack[index].run_length = delimiter_stack[index]
+            .run_length
+            .saturating_sub(delimiters_used);
+        delimiter_stack[j].run_length = delimiter_stack[j]
+            .run_length
+            .saturating_sub(delimiters_used);
+
+        if delimiter_stack[index].run_length == 0 {
+            delimiter_stack[index].active = false;
+        }
+        if delimiter_stack[j].run_length == 0 {
+            delimiter_stack[j].active = false;
+        }
+
+        // After resolving, recursively process the stack again
+        resolve_emphasis_recursive(elements, delimiter_stack, 0);
+        return;
     }
 
-    // For all delimiters that are still active, replace the placeholders with Text elements
-    delimiter_stack.iter_mut().for_each(|el| {
-        if el.active && el.parsed_position < elements.len() {
-            elements[el.parsed_position] = MdInlineElement::Text {
-                content: el.ch.to_string(),
-            };
-        }
-    });
+    // No opener found, move to next closer
+    resolve_emphasis_recursive(elements, delimiter_stack, index + 1);
 }
 
 /// Groups adjacent tokenized lines into groups (blocks) for further parsing.
