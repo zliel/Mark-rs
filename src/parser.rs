@@ -1020,6 +1020,7 @@ fn resolve_emphasis_recursive(
                 }
             }
         }
+
         let element_to_insert = match delimiters_used {
             2 => MdInlineElement::Bold {
                 content: content_slice,
@@ -1029,7 +1030,6 @@ fn resolve_emphasis_recursive(
             },
             _ => unreachable!(),
         };
-
 
         if closer.run_length > delimiters_used {
             elements[closer.parsed_position - 1] = element_to_insert;
