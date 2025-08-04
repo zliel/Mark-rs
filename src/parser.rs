@@ -951,6 +951,10 @@ fn resolve_emphasis_recursive(
                 let element_to_insert = MdInlineElement::Text {
                     content: el.ch.to_string().repeat(el.run_length),
                 };
+                if let Some(MdInlineElement::Placeholder { .. }) = elements.get(el.parsed_position)
+                {
+                    elements.remove(el.parsed_position);
+                }
                 elements.insert(el.parsed_position, element_to_insert);
             }
         });
