@@ -19,7 +19,7 @@ It is designed to be fast, efficient, and easy to use.
   - [Usage](#usage)
     - [Options](#options)
   - [Configuration](#configuration)
-  - [Note: Raw HTML](note-raw-html)
+  - [⚠️Note: Raw HTML](#note-raw-html)
   <!--toc:end-->
 
 ## Features
@@ -135,7 +135,7 @@ prism_theme = "vsc-dark-plus" # Will only take effect if "use_prism" is set to "
 sanitize_html = true # If "true", the HTML will be sanitized to prevent XSS attacks
 ```
 
-## ⚠️Note: Raw HTML
+## Note: Raw HTML
 
 Mark-rs supports using raw HTML in input Markdown files, but it should be noted that using raw HTML can lead to security vulnerabilities, such as XSS (Cross-Site Scripting) attacks, if the input is not properly sanitized. Therefore, it is recommended to use raw HTML with caution and only when necessary. By default, Mark-rs will sanitize the generated HTML before it is written to each file, but you should still be careful when using raw HTML.
 
