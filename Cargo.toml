@@ -2,7 +2,7 @@
 description = "A Markdown parser and Static Site Generator"
 edition = "2024"
 name = "mark-rs"
-version = "1.3.2"
+version = "1.3.3"
 license = "MIT"
 keywords = ["markdown", "cli", "ssg", "static_site", "notes"]
 repository = "https://github.com/zliel/Mark-rs"
