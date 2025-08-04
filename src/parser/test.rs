@@ -104,6 +104,34 @@ mod inline {
     }
 
     #[test]
+    fn complex_emphasis() {
+        init_test_config();
+        assert_eq!(
+            parse_inline(&tokenize("This is **bold and *italic text***.")),
+            vec![
+                Text {
+                    content: String::from("This is ")
+                },
+                Bold {
+                    content: vec![
+                        Text {
+                            content: String::from("bold and ")
+                        },
+                        Italic {
+                            content: vec![Text {
+                                content: String::from("italic text")
+                            }]
+                        }
+                    ]
+                },
+                Text {
+                    content: String::from(".")
+                }
+            ]
+        )
+    }
+
+    #[test]
     fn mixed_emphasis() {
         init_test_config();
         assert_eq!(
@@ -135,6 +163,58 @@ mod inline {
                     }
                 ]
             }]
+        )
+    }
+
+    #[test]
+    fn malformed_emphasis() {
+        init_test_config();
+        assert_eq!(
+            parse_inline(&tokenize("***Bold and italics with *too many asterisks***")),
+            vec![
+                Text {
+                    content: String::from("*")
+                },
+                Bold {
+                    content: vec![
+                        Text {
+                            content: String::from("Bold and italics with ")
+                        },
+                        Italic {
+                            content: vec![Text {
+                                content: String::from("too many asterisks")
+                            }]
+                        }
+                    ]
+                },
+            ]
+        )
+    }
+
+    #[test]
+    fn malformed_mixed_emphasis() {
+        init_test_config();
+        assert_eq!(
+            parse_inline(&tokenize("_**Bold and _not italic**")),
+            vec![
+                Text {
+                    content: String::from("_")
+                },
+                Bold {
+                    content: vec![
+                        Text {
+                            content: String::from("Bold and ")
+                        },
+                        Placeholder {
+                            ch: '_',
+                            token_position: 6
+                        },
+                        Text {
+                            content: String::from("not italic")
+                        }
+                    ]
+                },
+            ]
         )
     }
 
@@ -1833,6 +1913,54 @@ mod html_generation {
                     .collect::<String>(),
                 "This is <b>bold</b> and <i>italic</i> text."
             );
+        }
+
+        #[test]
+        fn complex_emphasis() {
+            init_test_config();
+            assert_eq!(
+                parse_inline(&tokenize("This is **bold and *italic text***."))
+                    .iter()
+                    .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
+                    .collect::<String>(),
+                "This is <b>bold and <i>italic text</i></b>."
+            );
+        }
+
+        #[test]
+        fn mixed_emphasis_separated() {
+            init_test_config();
+            assert_eq!(
+                parse_inline(&tokenize("_Italic **and bold**_"))
+                    .iter()
+                    .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
+                    .collect::<String>(),
+                "<i>Italic <b>and bold</b></i>"
+            );
+        }
+
+        #[test]
+        fn malformed_emphasis() {
+            init_test_config();
+            assert_eq!(
+                parse_inline(&tokenize("***Bold and italics with *too many asterisks***"))
+                    .iter()
+                    .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
+                    .collect::<String>(),
+                "*<b>Bold and italics with <i>too many asterisks</i></b>"
+            )
+        }
+
+        #[test]
+        fn malformed_mixed_emphasis() {
+            init_test_config();
+            assert_eq!(
+                parse_inline(&tokenize("_**Bold and _not italic**"))
+                    .iter()
+                    .map(|el| el.to_html("test_output", "test_input", "test_rel_path"))
+                    .collect::<String>(),
+                "_<b>Bold and _not italic</b>"
+            )
         }
 
         #[test]
