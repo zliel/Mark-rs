@@ -317,7 +317,10 @@ pub enum MdInlineElement {
     Code {
         content: String,
     },
-    Placeholder,
+    Placeholder {
+        ch: char,
+        token_position: usize,
+    },
 }
 
 impl From<String> for MdInlineElement {
@@ -416,7 +419,10 @@ impl ToHtml for MdInlineElement {
                 }
             }
             MdInlineElement::Code { content } => format!("<code>{content}</code>"),
-            MdInlineElement::Placeholder => unreachable!(),
+            MdInlineElement::Placeholder {
+                ch,
+                token_position: _,
+            } => ch.to_string(),
         }
     }
 }
@@ -443,7 +449,10 @@ impl MdInlineElement {
                 .join(""),
             MdInlineElement::Image { alt_text, .. } => alt_text.clone(),
             MdInlineElement::Code { content } => content.clone(),
-            MdInlineElement::Placeholder => unreachable!(),
+            MdInlineElement::Placeholder {
+                ch,
+                token_position: _,
+            } => ch.to_string(),
         }
     }
 }

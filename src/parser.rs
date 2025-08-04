@@ -590,7 +590,10 @@ pub fn parse_inline(markdown_tokens: &[Token]) -> Vec<MdInlineElement> {
                     can_close: true,
                 });
 
-                parsed_inline_elements.push(MdInlineElement::Placeholder);
+                parsed_inline_elements.push(MdInlineElement::Placeholder {
+                    ch: *delimiter,
+                    token_position: cursor.position(),
+                });
             }
             Token::OpenBracket => {
                 push_buffer_to_collection(&mut parsed_inline_elements, &mut buffer);
@@ -765,7 +768,10 @@ where
                     can_open: true,
                     can_close: true,
                 });
-                label_elements.push(MdInlineElement::Placeholder);
+                label_elements.push(MdInlineElement::Placeholder {
+                    ch: *delimiter,
+                    token_position: cursor.position(),
+                });
             }
             Token::Punctuation(s) if s == "!" => {
                 if cursor.peek_ahead(1) != Some(&Token::OpenBracket) {
