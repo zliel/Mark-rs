@@ -46,10 +46,10 @@ fn parse_block(line: &[Token]) -> Option<MdBlockElement> {
 
     match first_token {
         Some(Token::Punctuation(string)) if string == "#" => Some(parse_heading(line)),
-        Some(Token::Punctuation(string)) if string == "-" => {
+        Some(Token::Punctuation(string)) if string == "-" || string == "*" => {
             // Note that setext headings have already been handled in the group_lines_to_blocks
             // function by this point
-            if line.len() == 1 {
+            if line.len() == 1 && string == "-" {
                 // If the line only contains a dash, then it is a thematic break
                 Some(MdBlockElement::ThematicBreak)
             } else {
@@ -260,7 +260,7 @@ fn parse_unordered_list(list: &[Token]) -> MdBlockElement {
     parse_list(
         list,
         |tokens| {
-            matches!(tokens.first(), Some(Token::Punctuation(string)) if string == "-" && tokens.get(1) == Some(&Token::Whitespace)
+            matches!(tokens.first(), Some(Token::Punctuation(string)) if (string == "-" || string == "*") && tokens.get(1) == Some(&Token::Whitespace)
             )
         },
         |items| MdBlockElement::UnorderedList { items },
@@ -1067,6 +1067,9 @@ pub fn group_lines_to_blocks(mut tokenized_lines: Vec<Vec<Token>>) -> Vec<Vec<To
             Some(Token::Punctuation(string)) if string == "-" => {
                 group_dashed_lines(&mut blocks, &mut current_block, &mut previous_block, line);
             }
+            Some(Token::Punctuation(string)) if string == "*" => {
+                group_asterisked_lines(&mut blocks, &mut current_block, &mut previous_block, line);
+            }
             Some(Token::Tab) => {
                 group_tabbed_lines(&mut blocks, &mut current_block, &mut previous_block, line);
             }
@@ -1349,7 +1352,8 @@ fn group_tabbed_lines(
             let previous_line_start = previous_block.first();
             match previous_line_start {
                 Some(Token::Punctuation(string))
-                    if string == "-" && previous_block.get(1) == Some(&Token::Whitespace) =>
+                    if (string == "-" || string == "*")
+                        && previous_block.get(1) == Some(&Token::Whitespace) =>
                 {
                     // If the previous block is a list, then we append the line to it
                     attach_to_previous_block(blocks, previous_block, line, Some(Token::Newline));
@@ -1500,6 +1504,33 @@ fn group_dashed_lines(
                     blocks.push(take(previous_block));
                 }
             }
+        }
+    } else {
+        current_block.extend_from_slice(line);
+    }
+}
+
+/// Groups lines that start with asterisks into blocks.
+///
+/// # Arguments
+/// * `blocks` - A mutable reference to a vector of blocks, where each block is a vector of tokens.
+/// * `current_block` - A mutable reference to the current block being processed.
+/// * `previous_block` - A mutable reference to the previous block, used for context.
+/// * `line` - A mutable reference to the current line being processed, which is a vector of
+///   tokens.
+fn group_asterisked_lines(
+    blocks: &mut Vec<Vec<Token>>,
+    current_block: &mut Vec<Token>,
+    previous_block: &mut Vec<Token>,
+    line: &[Token],
+) {
+    if let Some(previous_line_start) = previous_block.first() {
+        if *previous_line_start == Token::Punctuation(String::from("*"))
+            && previous_block.get(1) == Some(&Token::Whitespace)
+        {
+            attach_to_previous_block(blocks, previous_block, line, Some(Token::Newline));
+        } else {
+            current_block.extend_from_slice(line);
         }
     } else {
         current_block.extend_from_slice(line);

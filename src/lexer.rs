@@ -40,6 +40,16 @@ pub fn tokenize(markdown_line: &str) -> Vec<Token> {
     let mut i = 0;
     while i < str_len {
         match chars[i] {
+            "*" if (i == 0 && matches!(chars.get(i + 1), Some(&" ")))
+                || (i > 0
+                    && matches!(chars.get(i - 1), Some(&" ") | Some(&"\t"))
+                    && matches!(chars.get(i + 1), Some(&" "))) =>
+            {
+                push_buffer_to_collection(&mut tokens, &mut buffer);
+
+                // Start of unordered list
+                tokens.push(Token::Punctuation(String::from(chars[i])));
+            }
             "*" | "_" => {
                 // if the current buffer isn't empty, append a Text token to the Vec<Token>
                 push_buffer_to_collection(&mut tokens, &mut buffer);
