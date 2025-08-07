@@ -191,7 +191,7 @@ fn run() -> Result<(), Error> {
     if cli.open {
         let index_path = Path::new(&cli.output_dir).join("index.html");
         if index_path.exists() {
-            if let Err(e) = webbrowser::open(index_path.to_str().unwrap()) {
+            if let Err(e) = webbrowser::open(&index_path.to_string_lossy()) {
                 error!("Failed to open index.html in browser: {e}");
             } else {
                 info!("Opened index.html in browser.");
