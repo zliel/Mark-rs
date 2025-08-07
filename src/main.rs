@@ -51,7 +51,6 @@ struct Cli {
     #[arg(
         short = 'O',
         long,
-        default_value = "false",
         help = "Open the generated index.html in the default web browser."
     )]
     open: bool,
