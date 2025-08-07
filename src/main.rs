@@ -48,6 +48,13 @@ struct Cli {
     verbose: bool,
     #[arg(short, long, default_value = "4")]
     num_threads: usize,
+    #[arg(
+        short = 'O',
+        long,
+        default_value = "false",
+        help = "Open the generated index.html in the default web browser."
+    )]
+    open: bool,
 }
 
 fn main() -> Result<(), Error> {
