@@ -189,6 +189,22 @@ fn run() -> Result<(), Error> {
 
     thread_pool.join_all();
 
+    if cli.open {
+        let index_path = Path::new(&cli.output_dir).join("index.html");
+        if index_path.exists() {
+            if let Err(e) = webbrowser::open(index_path.to_str().unwrap()) {
+                error!("Failed to open index.html in browser: {e}");
+            } else {
+                info!("Opened index.html in browser.");
+            }
+        } else {
+            error!(
+                "index.html does not exist at path: {}",
+                index_path.display()
+            );
+        }
+    }
+
     Ok(())
 }
 
