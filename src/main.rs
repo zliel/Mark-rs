@@ -48,6 +48,12 @@ struct Cli {
     verbose: bool,
     #[arg(short, long, default_value = "4")]
     num_threads: usize,
+    #[arg(
+        short = 'O',
+        long,
+        help = "Open the generated index.html in the default web browser."
+    )]
+    open: bool,
 }
 
 fn main() -> Result<(), Error> {
@@ -181,6 +187,22 @@ fn run() -> Result<(), Error> {
     }
 
     thread_pool.join_all();
+
+    if cli.open {
+        let index_path = Path::new(&cli.output_dir).join("index.html");
+        if index_path.exists() {
+            if let Err(e) = webbrowser::open(&index_path.to_string_lossy()) {
+                error!("Failed to open index.html in browser: {e}");
+            } else {
+                info!("Opened index.html in browser.");
+            }
+        } else {
+            error!(
+                "index.html does not exist at path: {}",
+                index_path.display()
+            );
+        }
+    }
 
     Ok(())
 }

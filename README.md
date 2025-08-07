@@ -102,6 +102,7 @@ You can also use the following CLI arguments to customize the behavior of Mark-r
 - `-n --num_threads <NUM_THREADS>`: Specify the number of threads to use (default: 4).
 - `-r, --recursive`: Recursively parse all Markdown files in the specified directory and its subdirectories. (default: false if not present)
 - `-v, --verbose`: Enable verbose output, which will print additional information while the program is running.
+- `-O, --open`: Open the generated index.html in the default web browser.
 - `-h, --help`: Display help information.
 - `-V, --version`: Display the version of Mark-rs.
 
