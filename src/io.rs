@@ -32,7 +32,13 @@ pub fn read_input_dir(
         // If recursive, visit all subdirectories
         let mut file_contents: Vec<(String, String)> = Vec::new();
         let input_dir = Path::new(input_dir);
-        visit_dir(Path::new(input_dir), input_dir, &mut file_contents).map_err(|e| {
+        visit_dir(
+            Path::new(input_dir),
+            input_dir,
+            &mut file_contents,
+            excluded_entries,
+        )
+        .map_err(|e| {
             error!(
                 "Failed to read input directory '{}': {}",
                 input_dir.display(),
@@ -68,6 +74,10 @@ pub fn read_input_dir(
                 })?
                 .to_string();
 
+            if excluded_entries.contains(&file_name) {
+                continue;
+            }
+
             if file_path.extension().and_then(|s| s.to_str()) == Some("md") {
                 let contents = read_file(file_path.to_str().unwrap()).map_err(|e| {
                     io::Error::other(format!(
@@ -94,9 +104,18 @@ fn visit_dir(
     for entry in read_dir(dir)? {
         let entry = entry?;
         let path = entry.path();
+        let relative_path = path
+            .strip_prefix(base)
+            .map_err(|e| io::Error::other(format!("Failed to strip base path: {e}")))?
+            .to_string_lossy()
+            .to_string();
+
+        if excluded_entries.contains(&relative_path) {
+            continue;
+        }
 
         if path.is_dir() {
-            visit_dir(&path, base, file_contents)?;
+            visit_dir(&path, base, file_contents, excluded_entries)?;
         } else if path.extension().and_then(|s| s.to_str()) == Some("md") {
             let rel_path = path
                 .strip_prefix(base)
