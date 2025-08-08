@@ -107,6 +107,20 @@ You can also use the following CLI arguments to customize the behavior of Mark-r
 - `-h, --help`: Display help information.
 - `-V, --version`: Display the version of Mark-rs.
 
+#### Note about `--exclude`
+
+Make sure to not put the list of excluded files just before the input directory, as then the input directory will be considered as an excluded file, leading to an error about the `<INPUT_DIR>` not being provided. Instead, put the `--exclude` option either after the input directory or have another flag between the exclude option and the input directory, like so:
+
+```bash
+markrs -o output/ -c config.toml -e file1.md dir_1 -r -O ./input # Notice that `-r` and `-O` are separate `-e` and the input directory
+```
+
+Or like so:
+
+```bash
+markrs -o output/ -c config.toml -r -O ./input --exclude file1.md dir_1 # Notice that `--exclude` is after the input directory
+```
+
 ## Configuration
 
 You can customize Mark-rs's behavior by specifying a config file to use. If a config file is not specified, then the default configuration directory will be checked; if no config file already exists, then the default `config.toml` file will be written.
