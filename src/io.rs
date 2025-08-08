@@ -26,6 +26,7 @@ use crate::html_generator::generate_default_css;
 pub fn read_input_dir(
     input_dir: &str,
     run_recursively: &bool,
+    excluded_entries: &[String],
 ) -> Result<Vec<(String, String)>, io::Error> {
     if *run_recursively {
         // If recursive, visit all subdirectories
@@ -88,6 +89,7 @@ fn visit_dir(
     dir: &Path,
     base: &Path,
     file_contents: &mut Vec<(String, String)>,
+    excluded_entries: &[String],
 ) -> Result<(), std::io::Error> {
     for entry in read_dir(dir)? {
         let entry = entry?;
