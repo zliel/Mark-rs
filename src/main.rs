@@ -88,7 +88,7 @@ fn run() -> Result<(), Error> {
 
     init_config(config_path)?;
     let config = CONFIG.get().unwrap();
-    let file_contents = read_input_dir(input_dir, run_recursively)?;
+    let file_contents = read_input_dir(input_dir, run_recursively, &cli.exclude)?;
     let mut file_names: Vec<String> = Vec::with_capacity(file_contents.len());
 
     let thread_pool = ThreadPool::build(num_threads).map_err(|e| {
