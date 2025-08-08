@@ -54,6 +54,8 @@ struct Cli {
         help = "Open the generated index.html in the default web browser."
     )]
     open: bool,
+    #[arg(short, long, default_value = "", num_args = 0.., help = "Exclude files or directories from the input directory. Can be specified multiple times, or as a space-separated list.")]
+    exclude: Vec<String>,
 }
 
 fn main() -> Result<(), Error> {
