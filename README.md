@@ -102,9 +102,24 @@ You can also use the following CLI arguments to customize the behavior of Mark-r
 - `-n --num_threads <NUM_THREADS>`: Specify the number of threads to use (default: 4).
 - `-r, --recursive`: Recursively parse all Markdown files in the specified directory and its subdirectories. (default: false if not present)
 - `-v, --verbose`: Enable verbose output, which will print additional information while the program is running.
+- `-e, --exclude <EXCLUDED_FILES>`: Exclude specific files or directories from being parsed. You can specify multiple files or directories by separating them with spaces.
 - `-O, --open`: Open the generated index.html in the default web browser.
 - `-h, --help`: Display help information.
 - `-V, --version`: Display the version of Mark-rs.
+
+#### Note about `--exclude`
+
+Make sure to not put the list of excluded files just before the input directory, as then the input directory will be considered as an excluded file, leading to an error about the `<INPUT_DIR>` not being provided. Instead, put the `--exclude` option either after the input directory or have another flag between the exclude option and the input directory, like so:
+
+```bash
+markrs -o output/ -c config.toml -e file1.md dir_1 -r -O ./input # Notice that `-r` and `-O` are separate `-e` and the input directory
+```
+
+Or like so:
+
+```bash
+markrs -o output/ -c config.toml -r -O ./input --exclude file1.md dir_1 # Notice that `--exclude` is after the input directory
+```
 
 ## Configuration
 

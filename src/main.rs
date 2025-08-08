@@ -54,6 +54,8 @@ struct Cli {
         help = "Open the generated index.html in the default web browser."
     )]
     open: bool,
+    #[arg(short, long, default_value = "", num_args = 0.., help = "Exclude files or directories from the input directory. Can be specified multiple times, or as a space-separated list.")]
+    exclude: Vec<String>,
 }
 
 fn main() -> Result<(), Error> {
@@ -86,7 +88,7 @@ fn run() -> Result<(), Error> {
 
     init_config(config_path)?;
     let config = CONFIG.get().unwrap();
-    let file_contents = read_input_dir(input_dir, run_recursively)?;
+    let file_contents = read_input_dir(input_dir, run_recursively, &cli.exclude)?;
     let mut file_names: Vec<String> = Vec::with_capacity(file_contents.len());
 
     let thread_pool = ThreadPool::build(num_threads).map_err(|e| {
