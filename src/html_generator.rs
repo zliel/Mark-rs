@@ -25,6 +25,7 @@ pub fn generate_html(
     output_dir: &str,
     input_dir: &str,
     html_rel_path: &str,
+    is_watching: bool,
 ) -> String {
     let mut html_output = String::new();
     let config = CONFIG.get().unwrap();
@@ -85,6 +86,40 @@ pub fn generate_html(
         body.push_str("\n\t\t<script src=\"https://cdnjs.cloudflare.com/ajax/libs/prism/1.30.0/plugins/show-language/prism-show-language.min.js\" integrity=\"sha512-d1t+YumgzdIHUL78me4B9NzNTu9Lcj6RdGVbdiFDlxRV9JTN9s+iBQRhUqLRq5xtWUp1AD+cW2sN2OlST716fw==\" crossorigin=\"anonymous\" referrerpolicy=\"no-referrer\"></script>");
     }
 
+    if is_watching {
+        body.push_str(
+            r#"
+        <script>
+            (function() {
+                var maxRetries = 5;
+                var retryCount = parseInt(sessionStorage.getItem("wsRetries") || "0");
+                if (retryCount >= maxRetries) {
+                    console.warn("[LiveReload] Server offline. Refresh manually when ready.");
+                    return;
+                }
+                var ws = new WebSocket("ws://localhost:3030/ws");
+                ws.onopen = function() { sessionStorage.setItem("wsRetries", "0"); };
+                ws.onmessage = function(e) {
+                    if (e.data === "reload") {
+                        sessionStorage.setItem("wsRetries", "0");
+                        location.reload();
+                    }
+                };
+                ws.onclose = function() {
+                    retryCount++;
+                    sessionStorage.setItem("wsRetries", retryCount.toString());
+                    if (retryCount < maxRetries) {
+                        setTimeout(function() { location.reload(); }, 1000);
+                    } else {
+                        console.warn("[LiveReload] Server offline. Refresh manually when ready.");
+                    }
+                };
+            })();
+        </script>
+        "#,
+        );
+    }
+
     body.push_str("\n\t</body>\n");
 
     html_output.push_str(&head);
@@ -101,7 +136,7 @@ pub fn generate_html(
 ///
 /// # Returns
 /// Returns a `String` containing the generated HTML for the index page.
-pub fn generate_index(file_names: &[String]) -> String {
+pub fn generate_index(file_names: &[String], is_watching: bool) -> String {
     let mut html_output = String::new();
 
     let head = generate_head("index", "index.html", CONFIG.get().unwrap());
@@ -119,7 +154,43 @@ pub fn generate_index(file_names: &[String]) -> String {
         ));
     });
 
-    body.push_str("\n</div>\n\t</body>\n");
+    body.push_str("\n</div>\n");
+
+    if is_watching {
+        body.push_str(
+            r#"
+        <script>
+            (function() {
+                var maxRetries = 5;
+                var retryCount = parseInt(sessionStorage.getItem("wsRetries") || "0");
+                if (retryCount >= maxRetries) {
+                    console.warn("[LiveReload] Server offline. Refresh manually when ready.");
+                    return;
+                }
+                var ws = new WebSocket("ws://localhost:3030/ws");
+                ws.onopen = function() { sessionStorage.setItem("wsRetries", "0"); };
+                ws.onmessage = function(e) {
+                    if (e.data === "reload") {
+                        sessionStorage.setItem("wsRetries", "0");
+                        location.reload();
+                    }
+                };
+                ws.onclose = function() {
+                    retryCount++;
+                    sessionStorage.setItem("wsRetries", retryCount.toString());
+                    if (retryCount < maxRetries) {
+                        setTimeout(function() { location.reload(); }, 1000);
+                    } else {
+                        console.warn("[LiveReload] Server offline. Refresh manually when ready.");
+                    }
+                };
+            })();
+        </script>
+        "#,
+        );
+    }
+
+    body.push_str("\t</body>\n");
 
     html_output.push_str(&head);
     html_output.push_str(&body);
