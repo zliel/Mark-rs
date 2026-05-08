@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["format_title","generate_default_css","generate_head","generate_html","generate_index","generate_navbar","indent_html"]};
